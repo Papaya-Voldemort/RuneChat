@@ -2,9 +2,14 @@
   import { tick } from "svelte";
   import { fade, slide } from "svelte/transition";
 
+  import SettingsMenu from "./SettingsMenu.svelte";
+  import InfoMenu from "./InfoMenu.svelte";
+
   let isSearching = false;
   let myInput;
   let sideBar = true;
+
+  let activeMenu = null; // "info" | "settings" | null
 
   async function startSearch() {
     isSearching = true;
@@ -121,14 +126,26 @@
       </div>
     </div>
     <div id="footer">
-      <button id="settings" class="iconBtn">
+      <button
+        id="settings"
+        class="iconBtn"
+        on:click={() => (activeMenu = "settings")}
+      >
         <img class="iconImg" src="src/images/Settings.svg" alt="Settings" />
       </button>
-      <button id="info" class="iconBtn">
+      <button id="info" class="iconBtn" on:click={() => (activeMenu = "info")}>
         <img class="iconImg" src="src/images/Info.svg" alt="Info" />
       </button>
     </div>
   </div>
+
+  {#if activeMenu === "settings"}
+    <SettingsMenu open={true} on:close={() => (activeMenu = null)} />
+  {/if}
+
+  {#if activeMenu === "info"}
+    <InfoMenu open={true} on:close={() => (activeMenu = null)} />
+  {/if}
 {/if}
 
 <style>
@@ -137,8 +154,8 @@
     width: 36px;
     height: 36px;
 
-    background-color: #ffffff;
-    border-radius: 5px;
+    background-color: var(--color-bg);
+    border-radius: var(--radius-md);
 
     display: flex;
     align-items: center;
@@ -148,7 +165,7 @@
   }
 
   .iconBtn:hover {
-    background-color: #e2e2e2;
+    background-color: var(--color-bg-hover);
   }
 
   .iconImg {
@@ -181,7 +198,7 @@
     min-width: 280px;
     padding: 0.5rem;
     opacity: 1 !important;
-    background-color: #ffffff;
+    background-color: var(--color-bg);
     pointer-events: auto;
   }
 
@@ -190,7 +207,7 @@
     top: 0.5rem;
     left: 0.5rem;
     z-index: 50;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px var(--color-shadow);
   }
 
   #top {
@@ -204,7 +221,7 @@
     text-align: center;
     flex: 1;
     font-size: 1.2rem;
-    color: #a51c30;
+    color: var(--color-primary);
   }
 
   .mountingBorder {
@@ -214,8 +231,8 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      #78716c 15%,
-      #78716c 85%,
+      var(--color-border-muted) 15%,
+      var(--color-border-muted) 85%,
       transparent 100%
     );
     opacity: 0.4;
@@ -223,9 +240,9 @@
 
   .largeBtn {
     width: 100%;
-    border: solid 3px #a51c30;
-    border-radius: 5px;
-    background-color: #ffffff;
+    border: solid var(--border-thick) var(--color-primary);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -235,7 +252,7 @@
   }
 
   .largeBtn:hover {
-    background-color: #e2e2e2;
+    background-color: var(--color-bg-hover);
   }
 
   .btnContent {
@@ -247,9 +264,9 @@
   .SearchLabel {
     min-height: 53px;
     width: 100%;
-    border: solid 3px #a51c30;
-    border-radius: 5px;
-    background-color: #ffffff;
+    border: solid var(--border-thick) var(--color-primary);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -265,7 +282,7 @@
     padding: 0;
     outline: none;
     font-size: inherit;
-    color: #a51c30;
+    color: var(--color-primary);
     font-size: 1.2rem;
   }
 
@@ -294,10 +311,10 @@
   .chat {
     padding: 0.3rem;
     margin: 0.3rem;
-    background: #ffffff;
-    border-radius: 3px;
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
     text-align: left;
-    border: solid 1px #ffffff;
+    border: solid var(--border-thin) var(--color-bg);
     transition: border 0.2s ease;
   }
 
@@ -306,11 +323,11 @@
   }
 
   .chat:hover {
-    border: solid 1px #a51c30;
+    border: solid var(--border-thin) var(--color-primary);
   }
 
   .chat span {
-    color: #a51c30;
+    color: var(--color-primary);
   }
 
   #footer {
