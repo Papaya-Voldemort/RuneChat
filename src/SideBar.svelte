@@ -50,7 +50,9 @@
 
   $: normalizedSearch = searchTerm.trim().toLowerCase();
   $: visibleChats = normalizedSearch
-    ? $chats.filter((chat) => chat.title.toLowerCase().includes(normalizedSearch))
+    ? $chats.filter((chat) =>
+        chat.title.toLowerCase().includes(normalizedSearch),
+      )
     : $chats;
 
   onMount(() => {
@@ -160,7 +162,11 @@
                 aria-label={`Delete ${chat.title}`}
                 on:click={(event) => removeChat(event, chat.id)}
               >
-                x
+                <img
+                  src="src/images/Close.svg"
+                  alt="Delete chat"
+                  class="iconImg closeBtn"
+                />
               </button>
             </div>
           {/each}
@@ -413,14 +419,29 @@
     background: var(--color-bg);
     color: var(--color-primary);
     border-radius: var(--radius-sm);
-    width: 24px;
-    height: 24px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
     line-height: 1;
+    min-width: 28px;
+    min-height: 32px;
+    opacity: 0.8;
+    transition:
+      opacity 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .chatRow:hover .deleteChat {
+    opacity: 1;
+  }
+
+  .deleteChat:hover {
+    border-color: var(--color-primary);
+    background: var(--color-bg-hover);
+    color: #ef4444;
   }
 
   .deleteChat:hover {
@@ -444,5 +465,10 @@
 
   #settings img:hover {
     transform: rotate(90deg);
+  }
+
+  .closeBtn {
+    width: 24px;
+    height: 24px;
   }
 </style>
