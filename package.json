@@ -3,18 +3,22 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "concurrently \"bun run server.ts\" \"vite\"",
+    "server": "bun run server.ts",
+    "client": "vite"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@types/bun": "latest",
+    "concurrently": "^9.2.1",
     "svelte": "^5.55.5",
-    "vite": "^8.0.10",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.63",
+    "@openrouter/ai-sdk-provider": "^2.9.0",
+    "ai": "^6.0.177",
     "dompurify": "^3.4.2",
     "marked": "^18.0.3"
   }

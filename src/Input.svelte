@@ -1,4 +1,108 @@
 <script lang="ts">
+  import { messages } from "./lib/stores/chat";
+
+  let message = "";
+  let loading = false;
+
+  async function send() {
+    if (!message.trim()) return;
+
+    const userContent = message;
+    messages.update((msgs) => [
+      ...msgs,
+      {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: userContent,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+
+    message = "";
+    loading = true;
+
+    try {
+      const currentMessages = get_messages();
+      const res = await fetch("http://localhost:3000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: currentMessages }),
+      });
+
+      if (!res.body) {
+        loading = false;
+        return;
+      }
+
+      const assistantId = crypto.randomUUID();
+      let assistantContent = "";
+      let thinkingContent = "";
+      
+      messages.update((msgs) => [
+        ...msgs,
+        {
+          id: assistantId,
+          role: "assistant",
+          content: "",
+          thinking: "",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        assistantContent += chunk;
+
+        // Parse thinking and content blocks
+        const { thinking, content } = parseThinkingAndContent(assistantContent);
+        thinkingContent = thinking;
+
+        messages.update((msgs) => {
+          const updated = [...msgs];
+          const assistantMsg = updated.find((m) => m.id === assistantId);
+          if (assistantMsg) {
+            assistantMsg.content = content;
+            assistantMsg.thinking = thinking;
+          }
+          return updated;
+        });
+      }
+    } finally {
+      loading = false;
+    }
+  }
+
+  function parseThinkingAndContent(fullContent: string): { thinking: string; content: string } {
+    const thinkingMatch = fullContent.match(/<thinking>([\s\S]*?)<\/thinking>/);
+    
+    if (thinkingMatch) {
+      const thinking = thinkingMatch[1];
+      const content = fullContent.replace(/<thinking>[\s\S]*?<\/thinking>/, "").trim();
+      return { thinking, content };
+    }
+
+    return { thinking: "", content: fullContent };
+  }
+
+  function get_messages() {
+    let result: any[] = [];
+    messages.subscribe((msgs) => {
+      result = msgs;
+    })();
+    return result;
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" && !loading) {
+      send();
+    }
+  }
 </script>
 
 <div class="chat-input">
@@ -7,13 +111,13 @@
     name="input"
     id="input"
     placeholder="Type a message..."
+    bind:value={message}
+    on:keydown={handleKeydown}
+    disabled={loading}
   />
 
-  <button class="send-btn">
-    <img
-      src="src/images/SendMessage.svg"
-      alt="Send Message"
-    />
+  <button class="send-btn" on:click={send} disabled={loading}>
+    <img src="src/images/SendMessage.svg" alt="Send Message" />
   </button>
 </div>
 
@@ -75,12 +179,14 @@
     transform: scale(0.95);
   }
 
+  .send-btn:disabled,
+  .chat-input input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .send-btn img {
     width: 18px;
     height: 18px;
   }
-
-  /* .chat-input:focus-within {
-    border: var(--border-thick) solid var(--color-primary);
-  } */
 </style>
