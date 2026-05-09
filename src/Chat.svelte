@@ -19,6 +19,7 @@
       id: "m2",
       role: "assistant",
       parts: [
+        { type: "reasoning", text: "I am thining hard about this one!" },
         {
           type: "text",
           text: `That's a great project to work on — rock paper scissors is actually a perfect beginner game because it's simple enough to finish, but teaches you a bunch of useful concepts along the way.
@@ -181,7 +182,11 @@ while True:
 
   async function copyBtn(message: any) {
     try {
-      await navigator.clipboard.writeText(message.content);
+      const text = message.parts
+        .filter((p: any) => p.type === "text")
+        .map((p: any) => p.text)
+        .join("\n");
+      await navigator.clipboard.writeText(text);
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
@@ -211,7 +216,6 @@ while True:
             )}
           </div>
         {:else}
-          <!-- fallback for OLD messages -->
           <div class="message-bubble">
             {@html renderMarkdown(message.content ?? "")}
           </div>

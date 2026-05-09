@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { messages } from "./lib/stores/chat";
+  import { messages, type Message } from "./lib/stores/chat";
+  import { get } from "svelte/store";
 
   let message = "";
   let loading = false;
@@ -13,7 +14,7 @@
       {
         id: crypto.randomUUID(),
         role: "user",
-        content: userContent,
+        parts: [{ type: "text", text: userContent }],
         timestamp: new Date().toISOString(),
       },
     ]);
@@ -35,16 +36,14 @@
       }
 
       const assistantId = crypto.randomUUID();
-      let assistantContent = "";
-      let thinkingContent = "";
+      let fullContent = "";
       
       messages.update((msgs) => [
         ...msgs,
         {
           id: assistantId,
           role: "assistant",
-          content: "",
-          thinking: "",
+          parts: [],
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -57,18 +56,22 @@
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        assistantContent += chunk;
+        fullContent += chunk;
 
-        // Parse thinking and content blocks
-        const { thinking, content } = parseThinkingAndContent(assistantContent);
-        thinkingContent = thinking;
+        // Parse thinking and content blocks from full content
+        const { thinking, content } = parseThinkingAndContent(fullContent);
 
         messages.update((msgs) => {
           const updated = [...msgs];
           const assistantMsg = updated.find((m) => m.id === assistantId);
           if (assistantMsg) {
-            assistantMsg.content = content;
-            assistantMsg.thinking = thinking;
+            assistantMsg.parts = [];
+            if (thinking) {
+              assistantMsg.parts.push({ type: "reasoning", text: thinking });
+            }
+            if (content) {
+              assistantMsg.parts.push({ type: "text", text: content });
+            }
           }
           return updated;
         });
@@ -91,11 +94,11 @@
   }
 
   function get_messages() {
-    let result: any[] = [];
-    messages.subscribe((msgs) => {
-      result = msgs;
-    })();
-    return result;
+    const msgs = get(messages);
+    return msgs.map((msg: Message) => ({
+      role: msg.role,
+      content: msg.parts.map((p) => p.text).join(""),
+    }));
   }
 
   function handleKeydown(e: KeyboardEvent) {
