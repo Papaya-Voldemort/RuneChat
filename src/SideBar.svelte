@@ -1,20 +1,29 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { fade, slide } from "svelte/transition";
 
   import SettingsMenu from "./SettingsMenu.svelte";
   import InfoMenu from "./InfoMenu.svelte";
+  import {
+    activeChatId,
+    chats,
+    createNewChat,
+    deleteChat,
+    initializeChatStore,
+    selectChat,
+  } from "./lib/stores/chat";
 
   let isSearching = false;
-  let myInput;
+  let myInput: HTMLInputElement | null = null;
   let sideBar = true;
+  let searchTerm = "";
 
-  let activeMenu = null; // "info" | "settings" | null
+  let activeMenu: "info" | "settings" | null = null;
 
   async function startSearch() {
     isSearching = true;
     await tick();
-    myInput.focus();
+    myInput?.focus();
   }
 
   function handleBlur() {
@@ -25,12 +34,28 @@
     sideBar = !sideBar;
   }
 
-  let chats = [
-    { title: "Greetings" },
-    { title: "Project Ideas" },
-    { title: "Cheapest Places to Live" },
-    { title: "Testing Testing " },
-  ];
+  async function handleCreateChat() {
+    await createNewChat();
+  }
+
+  async function openChat(chatId: string) {
+    await selectChat(chatId);
+  }
+
+  async function removeChat(event: MouseEvent, chatId: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    await deleteChat(chatId);
+  }
+
+  $: normalizedSearch = searchTerm.trim().toLowerCase();
+  $: visibleChats = normalizedSearch
+    ? $chats.filter((chat) => chat.title.toLowerCase().includes(normalizedSearch))
+    : $chats;
+
+  onMount(() => {
+    void initializeChatStore();
+  });
 </script>
 
 {#if !sideBar}
@@ -59,7 +84,7 @@
       <button id="logoBtn" class="iconBtn">
         <img id="logo" class="iconImg" src="src/images/Logo.svg" alt="Logo" />
       </button>
-      <span>RuneChat</span>
+      <span class="sectionTitle">RuneChat</span>
       <button id="toggleSide" class="iconBtn" on:click={toggleSideBar}>
         <img
           id="sidebarIcon"
@@ -71,9 +96,9 @@
     </div>
     <div class="mountingBorder"></div>
     <div id="chatManagment">
-      <button id="createChat" class="largeBtn">
+      <button id="createChat" class="largeBtn" on:click={handleCreateChat}>
         <div class="btnContent">
-          <span>New Chat</span>
+          <span class="btnLabel">New Chat</span>
           <img class="iconImg" src="src/images/NewChat.svg" alt="New Chat" />
         </div>
       </button>
@@ -89,6 +114,7 @@
               placeholder="Search Conversations"
               class="searchField"
               bind:this={myInput}
+              bind:value={searchTerm}
               on:blur={handleBlur}
             />
           </label>
@@ -101,7 +127,7 @@
             out:fade={{ duration: 150 }}
           >
             <div class="btnContent">
-              <span>Search Conversations</span>
+              <span class="btnLabel">Search Conversations</span>
               <img
                 class="iconImg"
                 src="src/images/Search.svg"
@@ -113,16 +139,38 @@
       </div>
     </div>
     <div id="chats">
-      <span>Chats</span>
+      <span class="sectionTitle">Chats</span>
       <div class="mountingBorder"></div>
       <div id="chatScroll">
-        {#each chats as chat}
-          <a href="#404" class="link">
-            <div class="chat">
-              <span>{chat.title}</span>
+        {#if visibleChats.length}
+          {#each visibleChats as chat}
+            <div class="chatRow">
+              <button
+                type="button"
+                class="chat"
+                class:active={chat.id === $activeChatId}
+                title={chat.title}
+                on:click={() => openChat(chat.id)}
+              >
+                <span class="chatTitle">{chat.title}</span>
+              </button>
+              <button
+                type="button"
+                class="deleteChat"
+                aria-label={`Delete ${chat.title}`}
+                on:click={(event) => removeChat(event, chat.id)}
+              >
+                x
+              </button>
             </div>
-          </a>
-        {/each}
+          {/each}
+        {:else}
+          <div class="emptyState">
+            <span class="chatTitle">
+              {normalizedSearch ? "No matching chats" : "No chats yet"}
+            </span>
+          </div>
+        {/if}
       </div>
     </div>
     <div id="footer">
@@ -217,7 +265,7 @@
     gap: 0.5rem;
   }
 
-  span {
+  .sectionTitle {
     text-align: center;
     flex: 1;
     font-size: 1.2rem;
@@ -259,6 +307,11 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+
+  .btnLabel {
+    color: var(--color-primary);
+    font-size: 1.2rem;
   }
 
   .SearchLabel {
@@ -308,26 +361,76 @@
     flex: 1;
   }
 
+  #chatScroll {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+  }
+
+  .chatRow {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
   .chat {
-    padding: 0.3rem;
-    margin: 0.3rem;
+    padding: 0.45rem 0.55rem;
     background: var(--color-bg);
     border-radius: var(--radius-sm);
     text-align: left;
-    border: solid var(--border-thin) var(--color-bg);
-    transition: border 0.2s ease;
-  }
-
-  .link {
-    text-decoration: none;
+    border: solid var(--border-thin) var(--color-border-muted);
+    transition:
+      border 0.2s ease,
+      background-color 0.2s ease;
+    width: 100%;
+    cursor: pointer;
   }
 
   .chat:hover {
     border: solid var(--border-thin) var(--color-primary);
   }
 
-  .chat span {
+  .chat.active {
+    border-color: var(--color-primary);
+    background-color: var(--color-bg-hover);
+  }
+
+  .chatTitle {
+    display: block;
     color: var(--color-primary);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.95rem;
+  }
+
+  .deleteChat {
+    border: solid var(--border-thin) var(--color-border-muted);
+    background: var(--color-bg);
+    color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+
+  .deleteChat:hover {
+    border-color: var(--color-primary);
+    background: var(--color-bg-hover);
+  }
+
+  .emptyState {
+    padding: 0.75rem 0.4rem;
+    opacity: 0.75;
   }
 
   #footer {

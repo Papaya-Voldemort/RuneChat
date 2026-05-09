@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { messages, type Message } from "./lib/stores/chat";
+  import {
+    initializeChatStore,
+    messages,
+    type Message,
+  } from "./lib/stores/chat";
   import { get } from "svelte/store";
 
   const API_URL = "http://localhost:3000/api/chat";
@@ -11,6 +15,7 @@
 
   async function send() {
     if (!message.trim()) return;
+    await initializeChatStore();
 
     const userContent = message;
     messages.update((msgs) => [
