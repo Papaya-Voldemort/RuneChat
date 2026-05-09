@@ -2,6 +2,10 @@
   import { messages, type Message } from "./lib/stores/chat";
   import { get } from "svelte/store";
 
+  const API_URL = "http://localhost:3000/api/chat";
+  const OPEN_THINKING_TAG = "<thinking>";
+  const CLOSE_THINKING_TAG = "</thinking>";
+
   let message = "";
   let loading = false;
 
@@ -21,31 +25,34 @@
 
     message = "";
     loading = true;
+    const assistantId = crypto.randomUUID();
+
+    messages.update((msgs) => [
+      ...msgs,
+      {
+        id: assistantId,
+        role: "assistant",
+        parts: [],
+        timestamp: new Date().toISOString(),
+      },
+    ]);
 
     try {
       const currentMessages = get_messages();
-      const res = await fetch("http://localhost:3000/api/chat", {
+      const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: currentMessages }),
       });
 
-      if (!res.body) {
-        loading = false;
-        return;
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Request failed with ${res.status}`);
       }
 
-      const assistantId = crypto.randomUUID();
-      
-      messages.update((msgs) => [
-        ...msgs,
-        {
-          id: assistantId,
-          role: "assistant",
-          parts: [],
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      if (!res.body) {
+        throw new Error("Empty response body from server");
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -58,49 +65,106 @@
         const chunk = decoder.decode(value, { stream: true });
         fullContent += chunk;
 
-        // Parse current thinking and text content
         const { thinking, text } = parseContent(fullContent);
-
-        messages.update((msgs) => {
-          const updated = [...msgs];
-          const assistantMsg = updated.find((m) => m.id === assistantId);
-          if (assistantMsg) {
-            assistantMsg.parts = [];
-            if (thinking) {
-              assistantMsg.parts.push({ type: "reasoning", text: thinking });
-            }
-            if (text) {
-              assistantMsg.parts.push({ type: "text", text: text });
-            }
-          }
-          return updated;
-        });
+        updateAssistantParts(assistantId, thinking, text);
       }
+
+      const flushChunk = decoder.decode();
+      if (flushChunk) {
+        fullContent += flushChunk;
+      }
+
+      if (!fullContent.trim()) {
+        throw new Error("Model returned an empty response");
+      }
+
+      const { thinking, text } = parseContent(fullContent);
+      updateAssistantParts(assistantId, thinking, text);
     } catch (error) {
       console.error("Chat error:", error);
+      const errorText =
+        error instanceof Error ? error.message : "Unknown chat error";
+      updateAssistantParts(
+        assistantId,
+        "",
+        `Sorry, I couldn't get a response. ${errorText}`,
+      );
     } finally {
       loading = false;
     }
   }
 
   function parseContent(content: string): { thinking: string; text: string } {
-    const thinkingMatch = content.match(/<thinking>([\s\S]*?)<\/thinking>/);
-    
-    if (thinkingMatch) {
-      const thinking = thinkingMatch[1];
-      const text = content.replace(/<thinking>[\s\S]*?<\/thinking>/g, "").trim();
-      return { thinking, text };
+    const thinkingParts: string[] = [];
+    const textParts: string[] = [];
+    let cursor = 0;
+
+    while (cursor < content.length) {
+      const openIndex = content.indexOf(OPEN_THINKING_TAG, cursor);
+
+      if (openIndex === -1) {
+        textParts.push(content.slice(cursor));
+        break;
+      }
+
+      textParts.push(content.slice(cursor, openIndex));
+      const thinkingStart = openIndex + OPEN_THINKING_TAG.length;
+      const closeIndex = content.indexOf(CLOSE_THINKING_TAG, thinkingStart);
+
+      if (closeIndex === -1) {
+        // Stream is still in thinking mode: surface partial reasoning immediately.
+        thinkingParts.push(content.slice(thinkingStart));
+        break;
+      }
+
+      thinkingParts.push(content.slice(thinkingStart, closeIndex));
+      cursor = closeIndex + CLOSE_THINKING_TAG.length;
     }
 
-    return { thinking: "", text: content };
+    return {
+      thinking: thinkingParts.join(""),
+      text: textParts.join(""),
+    };
+  }
+
+  function updateAssistantParts(id: string, thinking: string, text: string) {
+    messages.update((msgs) => {
+      const updated = [...msgs];
+      const assistantMsg = updated.find((m) => m.id === id);
+
+      if (!assistantMsg) return updated;
+
+      assistantMsg.parts = [];
+
+      if (thinking) {
+        assistantMsg.parts.push({ type: "reasoning", text: thinking });
+      }
+
+      if (text) {
+        assistantMsg.parts.push({ type: "text", text });
+      }
+
+      return updated;
+    });
   }
 
   function get_messages() {
     const msgs = get(messages);
-    return msgs.map((msg: Message) => ({
-      role: msg.role,
-      content: msg.parts.map((p) => p.text).join(""),
-    }));
+    return msgs.flatMap((msg: Message) => {
+      const textContent = msg.parts
+        .filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("");
+
+      if (!textContent) return [];
+
+      return [
+        {
+          role: msg.role,
+          content: textContent,
+        },
+      ];
+    });
   }
 
   function handleKeydown(e: KeyboardEvent) {

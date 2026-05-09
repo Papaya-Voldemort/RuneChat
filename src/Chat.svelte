@@ -320,6 +320,39 @@ while True:
     white-space: pre-wrap;
     word-wrap: break-word;
     max-width: 75%;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  .message-wrapper:hover .thinking {
+    opacity: 1;
+  }
+
+  .message-wrapper.assistant {
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .thinking {
+    max-width: 85%;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #999;
+    padding: 0.2rem 0 0.2rem 0.6rem;
+    margin: 0 0 0.15rem 0;
+    border-left: 2px solid #e0e0e0;
+    border-radius: 0;
+    background: transparent;
+    opacity: 0.7;
+  }
+
+  .assistant .message-bubble {
+    margin-top: 0.35rem;
+  }
+
+  .message-wrapper.assistant:hover .thinking {
+    opacity: 0.9;
+    border-left-color: #ccc;
   }
 
   .options {
