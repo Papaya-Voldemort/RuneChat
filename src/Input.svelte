@@ -49,101 +49,50 @@
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = "";
-      let inThinking = false;
-      let thinkingContent = "";
-      let textContent = "";
+      let fullContent = "";
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
+        fullContent += chunk;
 
-        // Check for thinking tags and parse in real-time
-        let processedUpTo = 0;
-
-        while (true) {
-          if (!inThinking) {
-            const thinkingStart = buffer.indexOf("<thinking>", processedUpTo);
-            if (thinkingStart !== -1) {
-              // Add any text before thinking tag
-              if (thinkingStart > processedUpTo) {
-                textContent += buffer.substring(processedUpTo, thinkingStart);
-              }
-              inThinking = true;
-              processedUpTo = thinkingStart + "<thinking>".length;
-              continue;
-            } else {
-              // No thinking tag found, accumulate as text
-              textContent += buffer.substring(processedUpTo);
-              processedUpTo = buffer.length;
-              break;
-            }
-          } else {
-            const thinkingEnd = buffer.indexOf("</thinking>", processedUpTo);
-            if (thinkingEnd !== -1) {
-              // Extract thinking content
-              thinkingContent += buffer.substring(processedUpTo, thinkingEnd);
-              inThinking = false;
-              processedUpTo = thinkingEnd + "</thinking>".length;
-              continue;
-            } else {
-              // Thinking not closed yet, accumulate
-              thinkingContent += buffer.substring(processedUpTo);
-              processedUpTo = buffer.length;
-              break;
-            }
-          }
-        }
-
-        // Remove processed content from buffer
-        buffer = buffer.substring(processedUpTo);
-
-        // Update UI with current thinking and text
-        messages.update((msgs) => {
-          const updated = [...msgs];
-          const assistantMsg = updated.find((m) => m.id === assistantId);
-          if (assistantMsg) {
-            assistantMsg.parts = [];
-            if (thinkingContent) {
-              assistantMsg.parts.push({ type: "reasoning", text: thinkingContent });
-            }
-            if (textContent) {
-              assistantMsg.parts.push({ type: "text", text: textContent });
-            }
-          }
-          return updated;
-        });
-      }
-
-      // Handle any remaining buffer content
-      if (buffer) {
-        if (inThinking) {
-          thinkingContent += buffer;
-        } else {
-          textContent += buffer;
-        }
+        // Parse current thinking and text content
+        const { thinking, text } = parseContent(fullContent);
 
         messages.update((msgs) => {
           const updated = [...msgs];
           const assistantMsg = updated.find((m) => m.id === assistantId);
           if (assistantMsg) {
             assistantMsg.parts = [];
-            if (thinkingContent) {
-              assistantMsg.parts.push({ type: "reasoning", text: thinkingContent });
+            if (thinking) {
+              assistantMsg.parts.push({ type: "reasoning", text: thinking });
             }
-            if (textContent) {
-              assistantMsg.parts.push({ type: "text", text: textContent });
+            if (text) {
+              assistantMsg.parts.push({ type: "text", text: text });
             }
           }
           return updated;
         });
       }
+    } catch (error) {
+      console.error("Chat error:", error);
     } finally {
       loading = false;
     }
+  }
+
+  function parseContent(content: string): { thinking: string; text: string } {
+    const thinkingMatch = content.match(/<thinking>([\s\S]*?)<\/thinking>/);
+    
+    if (thinkingMatch) {
+      const thinking = thinkingMatch[1];
+      const text = content.replace(/<thinking>[\s\S]*?<\/thinking>/g, "").trim();
+      return { thinking, text };
+    }
+
+    return { thinking: "", text: content };
   }
 
   function get_messages() {

@@ -9,7 +9,7 @@ const hackclub = createOpenRouter({
 export async function streamChat(messages: any[]) {
   const result = await streamText({
     model: hackclub("qwen/qwen3-32b"),
-    system: `You are a helpful assistant. When solving problems or thinking through complex topics, wrap your reasoning process in <thinking></thinking> tags. After your thinking, provide your final response outside of these tags.
+    system: `You are a helpful assistant. Every time you respond, wrap your reasoning process in <thinking></thinking> tags. After your thinking, provide your final response outside of these tags.
 
 Example:
 <thinking>
