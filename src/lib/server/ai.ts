@@ -17,7 +17,7 @@ export async function streamChat(messages: any[]) {
     },
   });
 
-  // Create a custom readable stream that includes thinking blocks
+  // Create a custom readable stream that streams thinking first, then text
   const customStream = new ReadableStream({
     async start(controller) {
       let thinkingContent = "";
@@ -25,15 +25,13 @@ export async function streamChat(messages: any[]) {
       for await (const chunk of result.fullStream) {
         if (chunk.type === "thinking-delta") {
           thinkingContent += chunk.delta;
+          // Stream thinking tags as content is accumulated
+          if (chunk.delta) {
+            controller.enqueue(`<thinking>${chunk.delta}</thinking>`);
+          }
         } else if (chunk.type === "text-delta") {
           controller.enqueue(chunk.delta);
         }
-      }
-
-      // If there was thinking content, append it wrapped in tags
-      if (thinkingContent) {
-        const thinkingBlock = `<thinking>${thinkingContent}</thinking>`;
-        controller.enqueue(thinkingBlock);
       }
 
       controller.close();
