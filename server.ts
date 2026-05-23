@@ -21,8 +21,19 @@ Bun.serve({
 
     if (url.pathname === "/api/chat" && req.method === "POST") {
       try {
-        const { messages } = await req.json();
-        const response = await streamChat(messages);
+        const { messages, apiKey } = await req.json();
+        
+        if (!apiKey) {
+          return Response.json(
+            { error: "API key is required" },
+            {
+              status: 400,
+              headers: corsHeaders,
+            },
+          );
+        }
+
+        const response = await streamChat(messages, apiKey);
 
         const headers = new Headers(response.headers);
         Object.entries(corsHeaders).forEach(([key, value]) =>

@@ -1,12 +1,16 @@
 import { streamText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
-const hackclub = createOpenRouter({
-  apiKey: process.env.HCAI_KEY!,
-  baseUrl: "https://ai.hackclub.com/proxy/v1",
-});
+export async function streamChat(messages: any[], apiKey: string) {
+  if (!apiKey) {
+    throw new Error("API key is required");
+  }
 
-export async function streamChat(messages: any[]) {
+  const hackclub = createOpenRouter({
+    apiKey: apiKey,
+    baseUrl: "https://ai.hackclub.com/proxy/v1",
+  });
+
   const result = await streamText({
     model: hackclub("google/gemini-3.1-flash-lite"),
 system: `You are Jules, a female AI assistant made by RunesLabs, an independent AI company.

@@ -1,7 +1,13 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Chat from "./Chat.svelte";
   import SideBar from "./SideBar.svelte";
+  import { apiKey } from "./lib/stores/api-key";
   import "./main.css";
+
+  onMount(() => {
+    apiKey.load();
+  });
 </script>
 
 <div class="page">

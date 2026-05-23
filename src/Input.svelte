@@ -4,6 +4,7 @@
     messages,
     type Message,
   } from "./lib/stores/chat";
+  import { apiKey } from "./lib/stores/api-key";
   import { get } from "svelte/store";
 
   const API_URL = "http://localhost:3000/api/chat";
@@ -16,6 +17,12 @@
   async function send() {
     if (!message.trim()) return;
     await initializeChatStore();
+
+    const currentApiKey = get(apiKey);
+    if (!currentApiKey) {
+      alert("Please set your HCAI API Key in settings first");
+      return;
+    }
 
     const userContent = message;
     messages.update((msgs) => [
@@ -47,7 +54,10 @@
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: currentMessages }),
+        body: JSON.stringify({
+          messages: currentMessages,
+          apiKey: currentApiKey,
+        }),
       });
 
       if (!res.ok) {

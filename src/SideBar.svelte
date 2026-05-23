@@ -11,6 +11,7 @@
     deleteChat,
     initializeChatStore,
     selectChat,
+    renameChat,
   } from "./lib/stores/chat";
 
   let isSearching = false;
@@ -147,15 +148,19 @@
         {#if visibleChats.length}
           {#each visibleChats as chat}
             <div class="chatRow">
-              <button
-                type="button"
+              <div
                 class="chat"
                 class:active={chat.id === $activeChatId}
-                title={chat.title}
                 on:click={() => openChat(chat.id)}
               >
-                <span class="chatTitle">{chat.title}</span>
-              </button>
+                <input
+                  class="chatTitleInput"
+                  type="text"
+                  bind:value={chat.title}
+                  on:click|stopPropagation
+                  on:change={() => renameChat(chat.id, chat.title)}
+                />
+              </div>
               <button
                 type="button"
                 class="deleteChat"
@@ -393,6 +398,8 @@
       background-color 0.2s ease;
     width: 100%;
     cursor: pointer;
+    display: flex;
+    align-items: center;
   }
 
   .chat:hover {
@@ -402,16 +409,6 @@
   .chat.active {
     border-color: var(--color-primary);
     background-color: var(--color-bg-hover);
-  }
-
-  .chatTitle {
-    display: block;
-    color: var(--color-primary);
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 0.95rem;
   }
 
   .deleteChat {
@@ -470,5 +467,17 @@
   .closeBtn {
     width: 24px;
     height: 24px;
+  }
+
+  .chatTitleInput {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--color-primary);
+    font-size: 0.95rem;
+    outline: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>
