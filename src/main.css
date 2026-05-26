@@ -22,7 +22,7 @@ body {
     --border-thin: 1px;
   }
 
-:global(body) {
+body {
   font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 

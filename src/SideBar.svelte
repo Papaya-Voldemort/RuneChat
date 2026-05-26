@@ -5,6 +5,15 @@
   import SettingsMenu from "./SettingsMenu.svelte";
   import InfoMenu from "./InfoMenu.svelte";
   import {
+    closeIcon,
+    infoIcon,
+    logoIcon,
+    newChatIcon,
+    searchIcon,
+    settingsIcon,
+    sideBarToggleIcon,
+  } from "./lib/assets";
+  import {
     activeChatId,
     chats,
     createNewChat,
@@ -71,7 +80,7 @@
     <img
       id="sidebarIcon"
       class="iconImg"
-      src="src/images/SideBarToggle.svg"
+      src={sideBarToggleIcon}
       alt="Open sidebar"
     />
   </button>
@@ -85,14 +94,14 @@
   >
     <div id="top">
       <button id="logoBtn" class="iconBtn">
-        <img id="logo" class="iconImg" src="src/images/Logo.svg" alt="Logo" />
+        <img id="logo" class="iconImg" src={logoIcon} alt="Logo" />
       </button>
       <span class="sectionTitle">RuneChat</span>
       <button id="toggleSide" class="iconBtn" on:click={toggleSideBar}>
         <img
           id="sidebarIcon"
           class="iconImg"
-          src="src/images/SideBarToggle.svg"
+          src={sideBarToggleIcon}
           alt="Toggle sidebar"
         />
       </button>
@@ -102,7 +111,7 @@
       <button id="createChat" class="largeBtn" on:click={handleCreateChat}>
         <div class="btnContent">
           <span class="btnLabel">New Chat</span>
-          <img class="iconImg" src="src/images/NewChat.svg" alt="New Chat" />
+          <img class="iconImg" src={newChatIcon} alt="New Chat" />
         </div>
       </button>
       <div class="search-transition-container">
@@ -131,11 +140,7 @@
           >
             <div class="btnContent">
               <span class="btnLabel">Search Conversations</span>
-              <img
-                class="iconImg"
-                src="src/images/Search.svg"
-                alt="Search Chats"
-              />
+              <img class="iconImg" src={searchIcon} alt="Search Chats" />
             </div>
           </button>
         {/if}
@@ -168,7 +173,7 @@
                 on:click={(event) => removeChat(event, chat.id)}
               >
                 <img
-                  src="src/images/Close.svg"
+                  src={closeIcon}
                   alt="Delete chat"
                   class="iconImg closeBtn"
                 />
@@ -190,10 +195,10 @@
         class="iconBtn"
         on:click={() => (activeMenu = "settings")}
       >
-        <img class="iconImg" src="src/images/Settings.svg" alt="Settings" />
+        <img class="iconImg" src={settingsIcon} alt="Settings" />
       </button>
       <button id="info" class="iconBtn" on:click={() => (activeMenu = "info")}>
-        <img class="iconImg" src="src/images/Info.svg" alt="Info" />
+        <img class="iconImg" src={infoIcon} alt="Info" />
       </button>
     </div>
   </div>

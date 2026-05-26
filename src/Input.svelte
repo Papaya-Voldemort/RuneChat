@@ -4,10 +4,11 @@
     messages,
     type Message,
   } from "./lib/stores/chat";
+  import { sendMessageIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
   import { get } from "svelte/store";
 
-  const API_URL = "http://localhost:3000/api/chat";
+  const API_URL = "/api/chat";
   const OPEN_THINKING_TAG = "<thinking>";
   const CLOSE_THINKING_TAG = "</thinking>";
 
@@ -201,7 +202,7 @@
   />
 
   <button class="send-btn" on:click={send} disabled={loading}>
-    <img src="src/images/SendMessage.svg" alt="Send Message" />
+    <img src={sendMessageIcon} alt="Send Message" />
   </button>
 </div>
 

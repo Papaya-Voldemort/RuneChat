@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"bun run server.ts\" \"vite\"",
+    "build": "vite build",
+    "start": "bun run server.ts",
     "server": "bun run server.ts",
-    "client": "vite"
+    "client": "vite",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",

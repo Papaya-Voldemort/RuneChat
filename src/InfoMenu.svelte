@@ -1,6 +1,9 @@
 <script>
   import { createEventDispatcher } from "svelte";
+  import { closeIcon } from "./lib/assets";
   const dispatch = createEventDispatcher();
+
+  export let open = false;
 
   function close() {
     dispatch("close");
@@ -11,14 +14,34 @@
   <div class="underlay" on:click={close}></div>
   <div class="menu">
     <div class="header">
-      <h1>Info</h1>
-      <button class="iconBtn" on:click={close()}>
-        <img class="iconImg" src="src/images/Close.svg" alt="Open sidebar" />
+      <h1>About RuneChat</h1>
+      <button class="iconBtn" on:click={close}>
+        <img class="iconImg" src={closeIcon} alt="Close info" />
       </button>
     </div>
     <hr />
     <div class="settings">
-      <p>Hey! Welcome to RunesChat! There is not much here yet... But more is always on the way!</p>
+      <p>
+        RuneChat is a lightweight chat UI for testing model behavior, prompts,
+        and streamed responses without a lot of extra product noise.
+      </p>
+
+      <h2>What it does</h2>
+      <ul>
+        <li>Stores chats locally in your browser with IndexedDB.</li>
+        <li>Streams assistant responses from the Bun backend.</li>
+        <li>Supports a configurable model through the `MODEL` env var.</li>
+      </ul>
+
+      <h2>Good to know</h2>
+      <ul>
+        <li>Your API key is saved in local storage on this device.</li>
+        <li>
+          The app expects the backend and frontend to share the same origin in
+          production.
+        </li>
+        <li>Railway should use `bun run build` and `bun run start`.</li>
+      </ul>
     </div>
   </div>
 {/if}

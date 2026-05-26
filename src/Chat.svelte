@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { renderMarkdown } from "./lib/functions/markdown";
   import Input from "./Input.svelte";
+  import { copyIcon } from "./lib/assets";
   import { initializeChatStore, messages } from "./lib/stores/chat";
 
   onMount(() => {
@@ -51,11 +52,7 @@
 
         <div class="options">
           <button class="iconBtn" on:click={() => copyBtn(message)}>
-            <img
-              src="src/images/Copy.svg"
-              alt="Copy Contents"
-              class="iconImg"
-            />
+            <img src={copyIcon} alt="Copy Contents" class="iconImg" />
           </button>
         </div>
       </div>
@@ -160,7 +157,7 @@
     align-items: flex-start;
     gap: 0.25rem;
   }
-  
+
   .thinking {
     max-width: 85%;
     font-size: 0.8rem;

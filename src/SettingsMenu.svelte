@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { createEventDispatcher } from "svelte";
+  import { closeIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
 
   const dispatch = createEventDispatcher();
@@ -12,6 +14,7 @@
   const unsubscribe = apiKey.subscribe((key) => {
     API_KEY = key;
   });
+  onDestroy(unsubscribe);
 
   function close() {
     dispatch("close");
@@ -41,7 +44,7 @@
     <div class="header">
       <h1>Settings</h1>
       <button class="iconBtn" on:click={close}>
-        <img class="iconImg" src="src/images/Close.svg" alt="Open sidebar" />
+        <img class="iconImg" src={closeIcon} alt="Close settings" />
       </button>
     </div>
     <hr />

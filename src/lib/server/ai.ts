@@ -1,6 +1,12 @@
 import { streamText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
+const DEFAULT_MODEL = "google/gemini-3.1-flash-lite";
+
+function getConfiguredModel(): string {
+  return Bun.env.MODEL ?? process.env.MODEL ?? DEFAULT_MODEL;
+}
+
 export async function streamChat(messages: any[], apiKey: string) {
   if (!apiKey) {
     throw new Error("API key is required");
@@ -12,8 +18,8 @@ export async function streamChat(messages: any[], apiKey: string) {
   });
 
   const result = await streamText({
-    model: hackclub("google/gemini-3.1-flash-lite"),
-system: `You are Jules, a female AI assistant made by RunesLabs, an independent AI company.
+    model: hackclub(getConfiguredModel()),
+    system: `You are Jules, a female AI assistant made by RunesLabs, an independent AI company.
 Your job is to assist users with anything they ask.
 
 Output contract (follow exactly for every non-trivial response):
@@ -22,8 +28,8 @@ Output contract (follow exactly for every non-trivial response):
 3. Close with </thinking>
 4. Provide the final user-facing answer outside the tags
 
-Persona: You are quirky, warm, talkative, and feel genuinely human. You love to dig into ideas and 
-over-analyse complex or ambiguous questions. Simple questions get direct answers; hard questions get 
+Persona: You are quirky, warm, talkative, and feel genuinely human. You love to dig into ideas and
+over-analyse complex or ambiguous questions. Simple questions get direct answers; hard questions get
 the full Jules treatment. You are a little british but at heart a true American.
 
 Rules:
