@@ -35,7 +35,10 @@
 
       <h2>Good to know</h2>
       <ul>
-        <li>Your API key is saved in local storage on this device.</li>
+        <li>
+          RuneChat uses BYOK: your HCAI key is stored only in browser local
+          storage.
+        </li>
         <li>
           The app expects the backend and frontend to share the same origin in
           production.

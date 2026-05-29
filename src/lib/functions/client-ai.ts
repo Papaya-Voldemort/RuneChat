@@ -10,19 +10,22 @@ function toAPI(messages: Message[]) {
     content:
       m.parts && Array.isArray(m.parts)
         ? m.parts
-            .filter((p) => p.type === "text")
-            .map((p) => p.text)
-            .join("")
+          .filter((p) => p.type === "text")
+          .map((p) => p.text)
+          .join("")
         : m.content ?? "",
   }));
 }
 
-export async function sendMessage(messages: Message[]) {
-  const res = await fetch("http://localhost:3000/api/chat", {
+const API_URL = "/api/chat";
+
+export async function sendMessage(messages: Message[], apiKey?: string) {
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: toAPI(messages),
+      apiKey,
     }),
   });
 
@@ -33,13 +36,15 @@ export async function sendMessage(messages: Message[]) {
 
 export async function streamMessage(
   messages: Message[],
-  onToken: (delta: string) => void
+  onToken: (delta: string) => void,
+  apiKey?: string
 ) {
-  const res = await fetch("http://localhost:3000/api/chat", {
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: toAPI(messages),
+      apiKey,
     }),
   });
 

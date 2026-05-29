@@ -1,6 +1,7 @@
-# RunesGPT
+# RuneChat
 > The future of ethical AI
 
+> Note: the repository folder is still named `RunesGPT` for historical/tracking reasons. The app is branded as RuneChat.
 
 ## Stack
 - Svelte 5
@@ -22,3 +23,4 @@ The client calls `/api/chat` directly. In development, Vite proxies that route t
 - Start command: `bun run start`
 - The server reads Railway's `PORT` automatically and binds to `0.0.0.0`
 - Optional env vars: `MODEL` to choose the chat model, `HOST` to override the bind host, `SERVER_PORT` for local backend testing, and `VITE_PORT` or `CLIENT_PORT` for the local dev server
+- The app uses BYOK: paste your HCAI key into settings and it is stored locally in browser storage.

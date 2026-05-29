@@ -1,10 +1,15 @@
 import { writable } from 'svelte/store';
 
 function createApiKeyStore() {
-  // Load from localStorage if available
+  // Load from localStorage if available, with migration from old keys.
   let initialKey = '';
   if (typeof localStorage !== 'undefined') {
-    initialKey = localStorage.getItem('hcai_api_key') || '';
+    const savedKey = localStorage.getItem('runechat_api_key');
+    const legacyKey = localStorage.getItem('hcai_api_key');
+    initialKey = savedKey || legacyKey || '';
+    if (!savedKey && legacyKey) {
+      localStorage.setItem('runechat_api_key', legacyKey);
+    }
   }
 
   const { subscribe, set, update } = writable(initialKey);
@@ -13,13 +18,18 @@ function createApiKeyStore() {
     subscribe,
     set: (key: string) => {
       if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('hcai_api_key', key);
+        localStorage.setItem('runechat_api_key', key);
       }
       set(key);
     },
     load: () => {
       if (typeof localStorage !== 'undefined') {
-        const key = localStorage.getItem('hcai_api_key') || '';
+        const savedKey = localStorage.getItem('runechat_api_key');
+        const legacyKey = localStorage.getItem('hcai_api_key');
+        const key = savedKey || legacyKey || '';
+        if (!savedKey && legacyKey) {
+          localStorage.setItem('runechat_api_key', legacyKey);
+        }
         set(key);
       }
     },

@@ -50,8 +50,14 @@
     <hr />
     <div class="settings">
       <div class="apiKey">
-        <label for="apiKey">HCAI API Key</label>
-        <input type="text" name="apiKey" id="apiKey" bind:value={API_KEY} />
+        <label for="apiKey">HCAI API Key (BYOK)</label>
+        <input
+          type="text"
+          name="apiKey"
+          id="apiKey"
+          placeholder="Paste your HCAI API key here"
+          bind:value={API_KEY}
+        />
         <button class="saveBtn" on:click={saveApiKey}>Save</button>
       </div>
     </div>
