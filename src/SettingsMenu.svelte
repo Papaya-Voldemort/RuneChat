@@ -60,6 +60,7 @@
         />
         <button class="saveBtn" on:click={saveApiKey}>Save</button>
       </div>
+      <span>Get your Key at: <a href="https://ai.hackclub.com">HCAI</a></span>
     </div>
   </div>
 {/if}

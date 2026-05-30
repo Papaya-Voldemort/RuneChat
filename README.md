@@ -1,26 +1,47 @@
 # RuneChat
-> The future of ethical AI
+![Last Commit](https://img.shields.io/github/last-commit/Papaya-Voldemort/portmaster)
 
-> Note: the repository folder is still named `RunesGPT` for historical/tracking reasons. The app is branded as RuneChat.
+A market simulation engine for modeling trade between ports, ships, and merchants.
 
-## Stack
-- Svelte 5
-- TypeScript
-- Bun
-- Vite
-- HCAI
-- Vercel AI SDK
-- 
+<!-- TODO: Finish readme and ai declaration -->
 
-## Development
-- `bun install`
-- `bun run dev`
+> AI Declaration: This project used AI for the following: Specific help on storage. See more in [`ai-declaration.md`](./ai-declaration.md).
 
-The client calls `/api/chat` directly. In development, Vite proxies that route to the Bun server port you set with `SERVER_PORT` (or `PORT`), and in production the Bun server serves the built app from `dist`.
+> RuneChat is powered by [HCAI](https://ai.hackclub.com/). If Hackclub AI is down your API key will not work
 
-## Railway
-- Build command: `bun run build`
-- Start command: `bun run start`
-- The server reads Railway's `PORT` automatically and binds to `0.0.0.0`
-- Optional env vars: `MODEL` to choose the chat model, `HOST` to override the bind host, `SERVER_PORT` for local backend testing, and `VITE_PORT` or `CLIENT_PORT` for the local dev server
-- The app uses BYOK: paste your HCAI key into settings and it is stored locally in browser storage.
+## What?
+RuneChat is one of my favorite projects I have ever worked on. It was the first I ever touched a JS framework or really used TS to its fullest.
+
+I have always wanted to make a simple ChatBot UI and thought this was the perfect opportunity to make one!
+
+So boom! RuneChat was born! A fun fact about the project is that its original name was RuneGPT, a combination of Runes from Svelte 5 and ChatGPT, but it was later renamed for brand consistency.
+
+## Features
+- Custom Material Icons
+- BYOK Support
+- Front and Backend
+- Reasoning Model Support
+- Model Persona
+
+
+## Quick Start
+
+Go to our web URL to try it out now: [Click Here](https://runechat-production-16f4.up.railway.app/)
+
+Or for a deeper look:
+
+```bash
+git clone https://github.com/Papaya-Voldemort/RuneChat.git
+cd RuneChat
+bun install
+bun run dev
+```
+
+## Future Updates
+In the future I want to add the following new features:
+- Multi Media Inputs
+- Image/Video generation
+- Custom System Prompts
+
+## Final Notes
+Thanks for checking out RuneChat hope you had fun :)
