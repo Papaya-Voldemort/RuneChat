@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { renderMarkdown } from "./lib/functions/markdown";
+  import { renderMarkdown, normalizeText } from "./lib/functions/markdown";
   import Input from "./Input.svelte";
   import { copyIcon } from "./lib/assets";
   import { initializeChatStore, messages } from "./lib/stores/chat";
@@ -28,12 +28,24 @@
       <div class="message-wrapper {message.role}">
         {#if message.parts?.length}
           {#if message.parts.some((p) => p.type === "reasoning")}
-            <div class="thinking">
-              {message.parts
-                .filter((p) => p.type === "reasoning")
-                .map((p) => p.text)
-                .join("")}
-            </div>
+            <details class="thinking-details">
+              <summary class="thinking-summary">
+                <span class="thinking-title">
+                  Thought Process
+                </span>
+                <span class="chevron">
+                  ▾
+                </span>
+              </summary>
+              <div class="thinking-content">
+                {normalizeText(
+                  message.parts
+                    .filter((p) => p.type === "reasoning")
+                    .map((p) => p.text)
+                    .join("")
+                )}
+              </div>
+            </details>
           {/if}
 
           <div class="message-bubble">
@@ -46,7 +58,15 @@
           </div>
         {:else}
           <div class="message-bubble">
-            {@html renderMarkdown(message.content ?? "")}
+            {#if message.role === "assistant" && !message.content}
+              <div class="typing-indicator">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </div>
+            {:else}
+              {@html renderMarkdown(message.content ?? "")}
+            {/if}
           </div>
         {/if}
 
@@ -140,17 +160,67 @@
     align-items: flex-start;
   }
 
-  .thinking {
-    display: block;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-width: 75%;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
+    /* Hides the default browser triangle/marker */
+  .thinking-details summary::-webkit-details-marker {
+    display: none;
+  }
+  .thinking-details summary {
+    list-style: none; /* For Firefox */
   }
 
-  .message-wrapper:hover .thinking {
-    opacity: 1;
+  .thinking-details {
+    max-width: 85%;
+    width: 100%;
+    margin: 0.4rem 0;
+    border-left: 2px solid #ccc;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #666;
+    transition: border-color 0.2s ease;
+  }
+
+  .thinking-details:hover {
+    border-left-color: var(--color-primary);
+  }
+
+  .thinking-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
+  }
+
+  .thinking-summary:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #333;
+  }
+
+  .thinking-title {
+    font-family: inherit;
+  }
+
+  .chevron {
+    font-size: 0.75rem;
+    display: inline-block;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Rotates the chevron when the accordion is open */
+  .thinking-details[open] .chevron {
+    transform: rotate(180deg);
+  }
+
+  .thinking-content {
+    padding: 0.5rem 0.6rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    line-height: 1.5;
+    color: #555;
   }
 
   .message-wrapper.assistant {
@@ -158,26 +228,8 @@
     gap: 0.25rem;
   }
 
-  .thinking {
-    max-width: 85%;
-    font-size: 0.8rem;
-    line-height: 1.4;
-    color: #999;
-    padding: 0.2rem 0 0.2rem 0.6rem;
-    margin: 0 0 0.15rem 0;
-    border-left: 2px solid #e0e0e0;
-    border-radius: 0;
-    background: transparent;
-    opacity: 0.7;
-  }
-
   .assistant .message-bubble {
     margin-top: 0.35rem;
-  }
-
-  .message-wrapper.assistant:hover .thinking {
-    opacity: 0.9;
-    border-left-color: #ccc;
   }
 
   .options {
@@ -297,4 +349,39 @@
     border-left-color: rgba(255, 255, 255, 0.5);
     color: rgba(255, 255, 255, 0.9);
   }
+
+    .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.2rem 0;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    background-color: #78716c;
+    border-radius: 50%;
+    animation: pulse 1.4s infinite ease-in-out both;
+  }
+
+  .dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  @keyframes pulse {
+    0%, 80%, 100% {
+      transform: scale(0.6);
+      opacity: 0.4;
+    }
+    40% {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+  }
+
 </style>

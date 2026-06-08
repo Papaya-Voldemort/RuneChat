@@ -12,8 +12,15 @@
   const OPEN_THINKING_TAG = "<thinking>";
   const CLOSE_THINKING_TAG = "</thinking>";
 
+  let textareaRef: HTMLTextAreaElement;
   let message = "";
   let loading = false;
+
+  function autoResize() {
+    if (!textareaRef) return;
+    textareaRef.style.height = "auto";
+    textareaRef.style.height = `${textareaRef.scrollHeight}px`;
+  }
 
   async function send() {
     if (!message.trim()) return;
@@ -37,6 +44,9 @@
     ]);
 
     message = "";
+    if (textareaRef) {
+      textareaRef.style.height = "auto"
+    }
     loading = true;
     const assistantId = crypto.randomUUID();
 
@@ -184,22 +194,27 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter" && !loading) {
-      send();
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (!loading) {
+        send();
+      }
     }
   }
 </script>
 
 <div class="chat-input">
-  <input
-    type="text"
+  <textarea
+    bind:this={textareaRef}
     name="input"
     id="input"
     placeholder="Type a message..."
     bind:value={message}
+    on:input={autoResize}
     on:keydown={handleKeydown}
     disabled={loading}
-  />
+    rows="1"
+  ></textarea>
 
   <button class="send-btn" on:click={send} disabled={loading}>
     <img src={sendMessageIcon} alt="Send Message" />
@@ -224,7 +239,7 @@
     max-width: 600px;
   }
 
-  .chat-input input {
+  .chat-input textarea {
     flex: 1;
 
     border: none;
@@ -233,9 +248,10 @@
 
     font-size: 14px;
     color: #222;
+    resize: none;
   }
 
-  .chat-input input::placeholder {
+  .chat-input textarea::placeholder {
     color: #999;
   }
 
@@ -265,7 +281,7 @@
   }
 
   .send-btn:disabled,
-  .chat-input input:disabled {
+  .chat-input textarea:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
