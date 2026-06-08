@@ -36,8 +36,15 @@
     myInput?.focus();
   }
 
-  function handleBlur() {
+  function cancelSearch() {
+    searchTerm = "";
     isSearching = false;
+  }
+
+  function handleSearchKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      cancelSearch();
+    }
   }
 
   function toggleSideBar() {
@@ -64,6 +71,34 @@
         chat.title.toLowerCase().includes(normalizedSearch),
       )
     : $chats;
+
+  let editingChatId = "";
+
+  function startEditing(chatId: string) {
+    editingChatId = chatId;
+  }
+
+  async function saveRename(chatId: string, title: string) {
+    editingChatId = "";
+    await renameChat(chatId, title);
+  }
+
+  function handleRenameKeydown(
+    e: KeyboardEvent,
+    chatId: string,
+    title: string,
+  ) {
+    if (e.key === "Enter") {
+      void saveRename(chatId, title);
+    } else if (e.key === "Escape") {
+      editingChatId = "";
+    }
+  }
+
+  function focusOnMount(node: HTMLInputElement) {
+    node.focus();
+    node.select();
+  }
 
   onMount(() => {
     void initializeChatStore();
@@ -116,7 +151,7 @@
       </button>
       <div class="search-transition-container">
         {#if isSearching}
-          <label
+          <div
             class="SearchLabel"
             in:fade={{ duration: 150 }}
             out:fade={{ duration: 150 }}
@@ -127,9 +162,20 @@
               class="searchField"
               bind:this={myInput}
               bind:value={searchTerm}
-              on:blur={handleBlur}
+              on:keydown={handleSearchKeydown}
             />
-          </label>
+            <button
+              class="clearSearchBtn"
+              on:click={cancelSearch}
+              aria-label="Cancel search"
+            >
+              <img
+                class="iconImg closeBtn"
+                src={closeIcon}
+                alt="Cancel Search"
+              /></button
+            >
+          </div>
         {:else}
           <button
             id="searchChats"
@@ -157,14 +203,25 @@
                 class="chat"
                 class:active={chat.id === $activeChatId}
                 on:click={() => openChat(chat.id)}
+                on:dblclick|stopPropagation={() => startEditing(chat.id)}
+                role="button"
+                tabindex="0"
+                on:keydown={(e) => e.key === "Enter" && openChat(chat.id)}
               >
-                <input
-                  class="chatTitleInput"
-                  type="text"
-                  bind:value={chat.title}
-                  on:click|stopPropagation
-                  on:change={() => renameChat(chat.id, chat.title)}
-                />
+                {#if editingChatId === chat.id}
+                  <input
+                    class="chatTitleInput"
+                    type="text"
+                    bind:value={chat.title}
+                    on:click|stopPropagation
+                    on:blur={() => saveRename(chat.id, chat.title)}
+                    on:keydown={(e) =>
+                      handleRenameKeydown(e, chat.id, chat.title)}
+                    use:focusOnMount
+                  />
+                {:else}
+                  <span class="chatTitle">{chat.title}</span>
+                {/if}
               </div>
               <button
                 type="button"
@@ -283,9 +340,12 @@
 
   .sectionTitle {
     text-align: center;
-    flex: 1;
     font-size: 1.2rem;
     color: var(--color-primary);
+  }
+
+  #top .sectionTitle {
+    flex: 1;
   }
 
   .mountingBorder {
@@ -375,13 +435,16 @@
   #chats {
     text-align: center;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   #chatScroll {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-    max-height: calc(100vh - 260px);
+    flex: 1;
     overflow-y: auto;
     padding-right: 0.25rem;
   }
@@ -401,10 +464,13 @@
     transition:
       border 0.2s ease,
       background-color 0.2s ease;
+    flex: 1;
+    min-width: 0;
     width: 100%;
     cursor: pointer;
     display: flex;
     align-items: center;
+    
   }
 
   .chat:hover {
@@ -429,6 +495,7 @@
     line-height: 1;
     min-width: 28px;
     min-height: 32px;
+    flex-shrink: 0;
     opacity: 0.8;
     transition:
       opacity 0.2s ease,
@@ -484,5 +551,33 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .chatTitle {
+    color: var(--color-primary);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    user-select: none;
+    text-align: left;
+  }
+
+  .clearSearchBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+  }
+
+  .clearSearchBtn:hover {
+    opacity: 1;
   }
 </style>

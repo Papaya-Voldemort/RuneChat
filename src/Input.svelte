@@ -3,6 +3,8 @@
     initializeChatStore,
     messages,
     type Message,
+    renameChat,
+    activeChatId,
   } from "./lib/stores/chat";
   import { sendMessageIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
@@ -33,6 +35,10 @@
     }
 
     const userContent = message;
+
+    const currentMsgs = get(messages);
+    const isFirstMessage = currentMsgs.length === 0;
+
     messages.update((msgs) => [
       ...msgs,
       {
@@ -43,10 +49,32 @@
       },
     ]);
 
+    if (isFirstMessage) {
+      const activeId = get(activeChatId);
+      if (activeId) {
+        void (async () => {
+          try {
+            const res = await fetch("/api/summarize", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: userContent, apiKey: currentApiKey }),
+            });
+            const { title } = await res.json();
+            if (title) {
+              void renameChat(activeId, title);
+            }
+          } catch (err) {
+            console.error("Failed to generate AI title:", err);
+          }
+        })();
+      }
+    }
+
     message = "";
     if (textareaRef) {
       textareaRef.style.height = "auto"
     }
+
     loading = true;
     const assistantId = crypto.randomUUID();
 

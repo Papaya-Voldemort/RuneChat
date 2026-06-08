@@ -3,7 +3,11 @@ import { fileURLToPath } from "node:url";
 import { streamChat } from "./src/lib/server/ai";
 
 const port = Number(
-  Bun.env.PORT ?? Bun.env.SERVER_PORT ?? process.env.PORT ?? process.env.SERVER_PORT ?? "3000",
+  Bun.env.PORT ??
+    Bun.env.SERVER_PORT ??
+    process.env.PORT ??
+    process.env.SERVER_PORT ??
+    "3000",
 );
 const host = Bun.env.HOST ?? process.env.HOST ?? "0.0.0.0";
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
@@ -98,6 +102,56 @@ Bun.serve({
             status: 500,
             headers: corsHeaders,
           },
+        );
+      }
+    }
+
+    if (url.pathname === "/api/summarize" && req.method === "POST") {
+      try {
+        const { text, apiKey } = await req.json();
+
+        if (!apiKey) {
+          return Response.json(
+            { error: "API key is required" },
+            { status: 400, headers: corsHeaders },
+          );
+        }
+
+        const response = await fetch(
+          "https://ai.hackclub.com/proxy/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model: "google/gemini-3.1-flash-lite",
+              messages: [
+                {
+                  role: "system",
+                  content:
+                    "Generate a short, concise, 2-to-4 word title for a conversation that starts with the user's message. Output ONLY the raw title. Do not wrap it in quotes, markdown, or punctuation.",
+                },
+                {
+                  role: "user",
+                  content: text,
+                },
+              ],
+            }),
+          },
+        );
+
+        const data = await response.json();
+        const title = data.choices?.[0]?.message?.content?.trim() || "New Chat";
+
+        return Response.json({ title }, { headers: corsHeaders });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        return Response.json(
+          { error: message },
+          { status: 500, headers: corsHeaders },
         );
       }
     }
