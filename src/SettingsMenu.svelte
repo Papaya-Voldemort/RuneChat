@@ -26,20 +26,16 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === "Escape") {
+    if (e.key === "Escape" && open) {
       close();
     }
   }
 </script>
 
+<svelte:window on:keydown={handleKeydown} />
+
 {#if open}
-  <div
-    class="underlay"
-    on:click={close}
-    on:keydown={handleKeydown}
-    role="presentation"
-    tabindex={-1}
-  ></div>
+  <div class="underlay" on:click={close} role="presentation"></div>
   <div class="menu">
     <div class="header">
       <h1>Settings</h1>
@@ -60,7 +56,11 @@
         />
         <button class="saveBtn" on:click={saveApiKey}>Save</button>
       </div>
-      <span>Get your Key at: <a target="_blank" href="https://ai.hackclub.com">HCAI</a></span>
+      <span
+        >Get your Key at: <a target="_blank" href="https://ai.hackclub.com"
+          >HCAI</a
+        ></span
+      >
     </div>
   </div>
 {/if}
@@ -102,22 +102,22 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1000;
-
-    padding: 0.5rem;
-    border: solid 3px var(--color-primary);
-    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border: solid var(--border-thin) var(--color-border-muted);
+    border-radius: 12px;
     background-color: var(--color-bg);
-
-    min-width: 60%;
-    min-height: 60%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 480px;
+    box-sizing: border-box;
   }
 
   .underlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(97, 97, 97, 0.39);
+    background-color: rgba(0, 0, 0, 0.45);
     z-index: 999;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
   }
 
   .menu h1 {
@@ -129,13 +129,15 @@
   .settings {
     display: flex;
     flex-direction: column;
+    gap: 1.25rem;
+    padding-top: 1rem;
   }
 
   .apiKey {
     display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
   }
 
   label {
@@ -157,7 +159,7 @@
     box-shadow: 0 2px 6px var(--color-shadow);
 
     width: 100%;
-    max-width: 600px;
+    max-width: 100%;
   }
 
   .saveBtn {

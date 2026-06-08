@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { createEventDispatcher } from "svelte";
   import { closeIcon } from "./lib/assets";
   const dispatch = createEventDispatcher();
@@ -8,7 +8,15 @@
   function close() {
     dispatch("close");
   }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape" && open) {
+      close();
+    }
+  }
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 {#if open}
   <div class="underlay" on:click={close}></div>
@@ -87,21 +95,25 @@
     transform: translate(-50%, -50%);
     z-index: 1000;
 
-    padding: 0.5rem;
-    border: solid 3px var(--color-primary);
+    padding: 1.5rem;
+    border: solid var(--border-thin) var(--color-border-muted);
     border-radius: var(--radius-md);
     background-color: var(--color-bg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 
-    min-width: 60%;
-    min-height: 60%;
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-sizing: border-box;
   }
 
   .underlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(97, 97, 97, 0.39);
+    background-color: rgba(0, 0, 0, 0.45);
     z-index: 999;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
   }
 
   .menu h1 {
