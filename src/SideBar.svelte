@@ -470,7 +470,6 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    
   }
 
   .chat:hover {
@@ -579,5 +578,18 @@
 
   .clearSearchBtn:hover {
     opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    #sideBar.expanded {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 100%;
+      min-width: 100%;
+      z-index: 100;
+      box-shadow: none;
+    }
   }
 </style>
