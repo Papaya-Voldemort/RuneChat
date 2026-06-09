@@ -2,8 +2,24 @@
   import { onMount } from "svelte";
   import { renderMarkdown, normalizeText } from "./lib/functions/markdown";
   import Input from "./Input.svelte";
-  import { copyIcon } from "./lib/assets";
-  import { initializeChatStore, messages } from "./lib/stores/chat";
+  import {
+    copyIcon,
+    lightningIcon,
+    flexboxIcon,
+    serverIcon,
+    colorsIcon,
+  } from "./lib/assets";
+  import {
+    initializeChatStore,
+    messages,
+    draftPrompt,
+  } from "./lib/stores/chat";
+
+  function selectSuggestion(text: string) {
+    draftPrompt.set(text);
+    // Find the input element and focus it
+    document.getElementById("input")?.focus();
+  }
 
   onMount(() => {
     void initializeChatStore();
@@ -24,59 +40,113 @@
 
 <section class="chat-container">
   <div class="messages">
-    {#each $messages as message (message.id)}
-      <div class="message-wrapper {message.role}">
-        {#if message.parts?.length}
-          {#if message.parts.some((p) => p.type === "reasoning")}
-            <details class="thinking-details">
-              <summary class="thinking-summary">
-                <span class="thinking-title">
-                  Thought Process
-                </span>
-                <span class="chevron">
-                  ▾
-                </span>
-              </summary>
-              <div class="thinking-content">
-                {normalizeText(
-                  message.parts
-                    .filter((p) => p.type === "reasoning")
-                    .map((p) => p.text)
-                    .join("")
-                )}
-              </div>
-            </details>
-          {/if}
+    {#if $messages.length === 0}
+      <div class="welcome-container">
+        <h1 class="welcome-title">How can I help you today?</h1>
+        <p class="welcome-subtitle">
+          Ask Jules anything or select a suggestion to get started:
+        </p>
 
-          <div class="message-bubble">
-            {@html renderMarkdown(
-              message.parts
-                .filter((p) => p.type === "text")
-                .map((p) => p.text)
-                .join(""),
-            )}
-          </div>
-        {:else}
-          <div class="message-bubble">
-            {#if message.role === "assistant" && !message.content}
-              <div class="typing-indicator">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-              </div>
-            {:else}
-              {@html renderMarkdown(message.content ?? "")}
-            {/if}
-          </div>
-        {/if}
+        <div class="suggestions-grid">
+          <button
+            class="suggestion-card"
+            on:click={() => selectSuggestion("Explain Svelte 5 Runes simply")}
+          >
+            <img src={lightningIcon} alt="Svelte 5" class="card-icon" />
+            <span class="card-title">Explain Svelte 5</span>
+            <span class="card-desc"
+              >Break down Svelte 5 Runes like $state and $derived</span
+            >
+          </button>
 
-        <div class="options">
-          <button class="iconBtn" on:click={() => copyBtn(message)}>
-            <img src={copyIcon} alt="Copy Contents" class="iconImg" />
+          <button
+            class="suggestion-card"
+            on:click={() =>
+              selectSuggestion("Help me debug a CSS Flexbox layout")}
+          >
+            <img src={flexboxIcon} alt="CSS Layoyt" class="card-icon" />
+            <span class="card-title">Debug CSS Flexbox</span>
+            <span class="card-desc"
+              >Fix vertical centering or overflow layout shifts</span
+            >
+          </button>
+
+          <button
+            class="suggestion-card"
+            on:click={() =>
+              selectSuggestion("Write a fast Bun server in TypeScript")}
+          >
+            <img src={serverIcon} alt="Bun Server" class="card-icon" />
+            <span class="card-title">Write Bun Server</span>
+            <span class="card-desc"
+              >Create a backend routing script with Bun.serve</span
+            >
+          </button>
+
+          <button
+            class="suggestion-card"
+            on:click={() =>
+              selectSuggestion("Brainstorm clean dark-mode color palettes")}
+          >
+            <img src={colorsIcon} alt="Color Palette" class="card-icon" />
+            <span class="card-title">Brainstorm Palettes</span>
+            <span class="card-desc"
+              >Generate HSL color tokens for modern designs</span
+            >
           </button>
         </div>
       </div>
-    {/each}
+    {:else}
+      {#each $messages as message (message.id)}
+        <div class="message-wrapper {message.role}">
+          {#if message.parts?.length}
+            {#if message.parts.some((p) => p.type === "reasoning")}
+              <details class="thinking-details">
+                <summary class="thinking-summary">
+                  <span class="thinking-title"> Thought Process </span>
+                  <span class="chevron"> ▾ </span>
+                </summary>
+                <div class="thinking-content">
+                  {normalizeText(
+                    message.parts
+                      .filter((p) => p.type === "reasoning")
+                      .map((p) => p.text)
+                      .join(""),
+                  )}
+                </div>
+              </details>
+            {/if}
+
+            <div class="message-bubble">
+              {@html renderMarkdown(
+                message.parts
+                  .filter((p) => p.type === "text")
+                  .map((p) => p.text)
+                  .join(""),
+              )}
+            </div>
+          {:else}
+            <div class="message-bubble">
+              {#if message.role === "assistant" && !message.content}
+                <div class="typing-indicator">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                </div>
+              {:else}
+                {@html renderMarkdown(message.content ?? "")}
+              {/if}
+            </div>
+          {/if}
+
+          <div class="options">
+            <button class="iconBtn" on:click={() => copyBtn(message)}>
+              <img src={copyIcon} alt="Copy Contents" class="iconImg" />
+            </button>
+          </div>
+        </div>
+      {/each}
+    {/if}
   </div>
   <div class="input-area">
     <Input />
@@ -160,12 +230,11 @@
     align-items: flex-start;
   }
 
-    /* Hides the default browser triangle/marker */
   .thinking-details summary::-webkit-details-marker {
     display: none;
   }
   .thinking-details summary {
-    list-style: none; /* For Firefox */
+    list-style: none;
   }
 
   .thinking-details {
@@ -350,7 +419,7 @@
     color: rgba(255, 255, 255, 0.9);
   }
 
-    .typing-indicator {
+  .typing-indicator {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -374,7 +443,9 @@
   }
 
   @keyframes pulse {
-    0%, 80%, 100% {
+    0%,
+    80%,
+    100% {
       transform: scale(0.6);
       opacity: 0.4;
     }
@@ -384,4 +455,81 @@
     }
   }
 
+  .welcome-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    max-width: 600px;
+    margin: auto;
+    padding: 2rem 1rem;
+    gap: 1.5rem;
+  }
+
+  .welcome-title {
+    font-size: 1.8rem;
+    color: var(--color-primary);
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .welcome-subtitle {
+    font-size: 1rem;
+    color: #666;
+    margin: 0 0 1rem 0;
+  }
+
+  .suggestions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    .suggestions-grid {
+      grid-template-columns: 1fr; /* Stack on mobile screens */
+    }
+  }
+
+  .suggestion-card {
+    background: white;
+    border: var(--border-thin) solid var(--color-border-muted);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    box-shadow: 0 1px 3px var(--color-shadow);
+  }
+
+  .suggestion-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--color-shadow);
+  }
+
+  .card-icon {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 0.25rem;
+    color: var(--color-primary);
+  }
+
+  .card-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #222;
+  }
+
+  .card-desc {
+    font-size: 0.8rem;
+    color: #666;
+    line-height: 1.3;
+  }
 </style>

@@ -5,10 +5,12 @@
     type Message,
     renameChat,
     activeChatId,
+    draftPrompt
   } from "./lib/stores/chat";
   import { sendMessageIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
   import { get } from "svelte/store";
+  import { tick } from "svelte"
 
   const API_URL = "/api/chat";
   const OPEN_THINKING_TAG = "<thinking>";
@@ -17,6 +19,14 @@
   let textareaRef: HTMLTextAreaElement;
   let message = "";
   let loading = false;
+
+  draftPrompt.subscribe((value) => {
+    if (value) {
+      message = value;
+      draftPrompt.set("");
+      void tick().then(autoResize)
+    }
+  });
 
   function autoResize() {
     if (!textareaRef) return;

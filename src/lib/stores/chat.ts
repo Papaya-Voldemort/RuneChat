@@ -34,6 +34,7 @@ let pendingMessages: Message[] | null = null;
 export const chats = writable<Chat[]>([]);
 export const activeChatId = writable<string | null>(null);
 export const messages = writable<Message[]>([]);
+export const draftPrompt = writable<string>("");
 
 function getStorage(): StorageLike | null {
   const storage = (globalThis as { localStorage?: StorageLike }).localStorage;
