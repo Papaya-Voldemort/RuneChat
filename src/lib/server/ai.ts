@@ -13,6 +13,7 @@ export async function streamChat(
   model?: string,
   persona?: string,
   customPrompt?: string,
+  maxTokens?: number,
 ) {
   if (!apiKey) {
     throw new Error("API key is required");
@@ -23,7 +24,7 @@ export async function streamChat(
     baseUrl: "https://ai.hackclub.com/proxy/v1",
   });
 
-  const selectedModel = model || getConfiguredModel();
+  const selectedModel = model?.trim() || getConfiguredModel();
 
   // Define a clean type structure if you are using TypeScript
   interface PersonaConfig {
@@ -101,21 +102,20 @@ You believe that truth is best understood through metaphor, resonance, and narra
 4. Provide the final, beautifully descriptive, and illuminating response outside the tags.`,
   };
 
-  // --- Execution Logic ---
   let systemPrompt: string;
+  const personaKey = (persona || "jules").toLowerCase();
 
   if (persona === "custom") {
     systemPrompt = customPrompt || "You are a helpful AI assistant.";
   } else {
-    // Graceful fallback to 'jules' if the persona key is missing or invalid
-    systemPrompt =
-      PERSONA_CONFIGS[persona.toLowerCase()] || PERSONA_CONFIGS["jules"];
+    systemPrompt = PERSONA_CONFIGS[personaKey] || PERSONA_CONFIGS["jules"] || "";
   }
 
   const result = await streamText({
     model: hackclub(selectedModel),
     system: systemPrompt,
     messages,
+    maxOutputTokens: maxTokens,
   });
 
   const encoder = new TextEncoder();

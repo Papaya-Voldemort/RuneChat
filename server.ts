@@ -26,6 +26,7 @@ interface ChatRequestBody {
   model?: string;
   persona?: string;
   customPrompt?: string;
+  maxTokens?: number;
 }
 
 async function serveClient(pathname: string): Promise<Response> {
@@ -71,7 +72,7 @@ Bun.serve({
 
     if (url.pathname === "/api/chat" && req.method === "POST") {
       try {
-        const { messages, apiKey, model, persona, customPrompt } =
+        const { messages, apiKey, model, persona, customPrompt, maxTokens } =
           (await req.json()) as ChatRequestBody;
 
         if (!apiKey) {
@@ -90,6 +91,7 @@ Bun.serve({
           model,
           persona,
           customPrompt,
+          maxTokens,
         );
 
         const headers = new Headers(response.headers);

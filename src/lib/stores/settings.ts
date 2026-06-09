@@ -24,6 +24,12 @@ export const customModelId = writable<string>(
     : "",
 );
 
+export const maxTokens = writable<string>(
+  typeof localStorage !== "undefined"
+    ? localStorage.getItem("runechat_max_tokens") || "4096"
+    : "4096",
+);
+
 if (typeof localStorage !== "undefined") {
   selectedModel.subscribe((val) => localStorage.setItem("runechat_model", val));
   selectedPersona.subscribe((val) =>
@@ -35,5 +41,9 @@ if (typeof localStorage !== "undefined") {
 
   customModelId.subscribe((val) =>
     localStorage.setItem("runechat_custom_model", val),
+  );
+
+  maxTokens.subscribe((val) =>
+    localStorage.setItem("runechat_max_tokens", val),
   );
 }

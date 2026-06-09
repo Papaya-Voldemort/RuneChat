@@ -13,6 +13,7 @@
     selectedPersona,
     customSystemPrompt,
     customModelId,
+    maxTokens,
   } from "./lib/stores/settings";
 
   import { sendMessageIcon } from "./lib/assets";
@@ -117,6 +118,7 @@
 
       const activePersona = get(selectedPersona);
       const activePrompt = get(customSystemPrompt);
+      const activeMaxTokens = get(maxTokens);
 
       const res = await fetch(API_URL, {
         method: "POST",
@@ -127,6 +129,7 @@
           model: activeModel,
           persona: activePersona,
           customPrompt: activePrompt,
+          maxTokens: activeMaxTokens ? Number(activeMaxTokens) : undefined,
         }),
       });
 
@@ -236,10 +239,11 @@
   function get_messages() {
     const msgs = get(messages);
     return msgs.flatMap((msg: Message) => {
-      const textContent = msg.parts
+      const parts = msg.parts || [];
+      const textContent = parts
         .filter((part) => part.type === "text")
         .map((part) => part.text)
-        .join("");
+        .join("") || msg.content || "";
 
       if (!textContent) return [];
 

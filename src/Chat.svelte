@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { renderMarkdown, normalizeText } from "./lib/functions/markdown";
   import Input from "./Input.svelte";
   import {
@@ -15,6 +15,18 @@
     draftPrompt,
   } from "./lib/stores/chat";
   import { selectedPersona } from "./lib/stores/settings";
+
+  let messagesContainer: HTMLElement;
+
+  function scrollToBottom() {
+    if (messagesContainer) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  }
+
+  $: if ($messages) {
+    tick().then(scrollToBottom);
+  }
 
   $: displayPersonaName = $selectedPersona
     ? $selectedPersona.charAt(0).toUpperCase() + $selectedPersona.slice(1)
@@ -44,7 +56,7 @@
 </script>
 
 <section class="chat-container">
-  <div class="messages">
+  <div class="messages" bind:this={messagesContainer}>
     {#if $messages.length === 0}
       <div class="welcome-container">
         <h1 class="welcome-title">How can I help you today?</h1>
@@ -207,6 +219,10 @@
     padding-bottom: 4rem;
     scrollbar-width: none;
     gap: 1rem;
+  }
+
+  .messages::-webkit-scrollbar {
+    display: none;
   }
 
   .input-area {

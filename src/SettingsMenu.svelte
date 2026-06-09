@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import { createEventDispatcher } from "svelte";
   import { closeIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
@@ -8,15 +7,15 @@
     selectedPersona,
     customSystemPrompt,
     customModelId,
+    maxTokens,
   } from "./lib/stores/settings";
 
   const dispatch = createEventDispatcher();
 
   export let open = false;
 
-  let API_KEY = "";
-
   const models = [
+    { slug: "anthropic/claude-fable-5", name: "Claude Fable 5" },
     {
       slug: "google/gemini-3.1-flash-lite-preview",
       name: "Gemini 3.1 Flash Lite (Preview)",
@@ -43,12 +42,6 @@
     { slug: "glm/glm-5.1", name: "GLM 5.1" },
     { slug: "custom", name: "Custom Model ID..." },
   ];
-
-  // Load key from store on component mount
-  const unsubscribe = apiKey.subscribe((key) => {
-    API_KEY = key;
-  });
-  onDestroy(unsubscribe);
 
   function close() {
     dispatch("close");
@@ -81,7 +74,7 @@
           name="apiKey"
           id="apiKey"
           placeholder="Paste your HCAI API key here"
-          bind:value={API_KEY}
+          bind:value={$apiKey}
         />
       </div>
       <span
@@ -130,6 +123,15 @@
           ></textarea>
         </div>
       {/if}
+      <div class="settings-item">
+        <label for="maxTokensInput">Max Tokens</label>
+        <input
+          type="number"
+          id="maxTokensInput"
+          placeholder="e.g. 4096"
+          bind:value={$maxTokens}
+        />
+      </div>
     </div>
   </div>
 {/if}
@@ -229,21 +231,6 @@
 
     width: 100%;
     max-width: 100%;
-  }
-
-  .saveBtn {
-    padding: 8px 16px;
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.2s ease;
-  }
-
-  .saveBtn:hover {
-    opacity: 0.9;
   }
 
   input[type="text"],

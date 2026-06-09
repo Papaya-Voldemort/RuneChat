@@ -19,7 +19,7 @@
 <svelte:window on:keydown={handleKeydown} />
 
 {#if open}
-  <div class="underlay" on:click={close}></div>
+  <div class="underlay" on:click={close} role="presentation"></div>
   <div class="menu">
     <div class="header">
       <h1>About RuneChat</h1>
