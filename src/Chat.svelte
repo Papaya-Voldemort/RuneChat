@@ -509,9 +509,10 @@
     width: 100%;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 768px) {
+    .welcome-subtitle,
     .suggestions-grid {
-      grid-template-columns: 1fr; /* Stack on mobile screens */
+      display: none;
     }
   }
 
