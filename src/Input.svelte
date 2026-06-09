@@ -5,12 +5,20 @@
     type Message,
     renameChat,
     activeChatId,
-    draftPrompt
+    draftPrompt,
   } from "./lib/stores/chat";
+
+  import {
+    selectedModel,
+    selectedPersona,
+    customSystemPrompt,
+    customModelId,
+  } from "./lib/stores/settings";
+
   import { sendMessageIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
   import { get } from "svelte/store";
-  import { tick } from "svelte"
+  import { tick } from "svelte";
 
   const API_URL = "/api/chat";
   const OPEN_THINKING_TAG = "<thinking>";
@@ -24,7 +32,7 @@
     if (value) {
       message = value;
       draftPrompt.set("");
-      void tick().then(autoResize)
+      void tick().then(autoResize);
     }
   });
 
@@ -67,7 +75,10 @@
             const res = await fetch("/api/summarize", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text: userContent, apiKey: currentApiKey }),
+              body: JSON.stringify({
+                text: userContent,
+                apiKey: currentApiKey,
+              }),
             });
             const { title } = await res.json();
             if (title) {
@@ -82,7 +93,7 @@
 
     message = "";
     if (textareaRef) {
-      textareaRef.style.height = "auto"
+      textareaRef.style.height = "auto";
     }
 
     loading = true;
@@ -100,12 +111,22 @@
 
     try {
       const currentMessages = get_messages();
+
+      const modelVal = get(selectedModel);
+      const activeModel = modelVal === "custom" ? get(customModelId) : modelVal;
+
+      const activePersona = get(selectedPersona);
+      const activePrompt = get(customSystemPrompt);
+
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: currentMessages,
           apiKey: currentApiKey,
+          model: activeModel,
+          persona: activePersona,
+          customPrompt: activePrompt,
         }),
       });
 

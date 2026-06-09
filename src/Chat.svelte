@@ -14,6 +14,11 @@
     messages,
     draftPrompt,
   } from "./lib/stores/chat";
+  import { selectedPersona } from "./lib/stores/settings";
+
+  $: displayPersonaName = $selectedPersona
+    ? $selectedPersona.charAt(0).toUpperCase() + $selectedPersona.slice(1)
+    : "Jules";
 
   function selectSuggestion(text: string) {
     draftPrompt.set(text);
@@ -44,7 +49,7 @@
       <div class="welcome-container">
         <h1 class="welcome-title">How can I help you today?</h1>
         <p class="welcome-subtitle">
-          Ask Jules anything or select a suggestion to get started:
+          Ask {displayPersonaName} anything or select a suggestion to get started:
         </p>
 
         <div class="suggestions-grid">

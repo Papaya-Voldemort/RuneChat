@@ -3,12 +3,46 @@
   import { createEventDispatcher } from "svelte";
   import { closeIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
+  import {
+    selectedModel,
+    selectedPersona,
+    customSystemPrompt,
+    customModelId,
+  } from "./lib/stores/settings";
 
   const dispatch = createEventDispatcher();
 
   export let open = false;
 
   let API_KEY = "";
+
+  const models = [
+    {
+      slug: "google/gemini-3.1-flash-lite-preview",
+      name: "Gemini 3.1 Flash Lite (Preview)",
+    },
+    { slug: "google/gemini-3.1-flash-lite", name: "Gemini 3.1 Flash Lite" },
+    { slug: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+    { slug: "google/gemma-4-31b-instruct", name: "Gemma 4 31B Instruct" },
+    { slug: "anthropic/claude-sonnet-4.6", name: "Claude 4.6 Sonnet" },
+    { slug: "anthropic/claude-sonnet-4.5", name: "Claude 4.5 Sonnet" },
+    { slug: "anthropic/claude-opus-4.8", name: "Claude 4.8 Opus" },
+    { slug: "anthropic/claude-opus-4.5", name: "Claude 4.5 Opus" },
+    { slug: "anthropic/claude-haiku-4.5", name: "Claude 4.5 Haiku" },
+    { slug: "anthropic/claude-sonnet-latest", name: "Claude Sonnet (Latest)" },
+    { slug: "openai/gpt-5.5-preview", name: "GPT-5.5 Preview" },
+    { slug: "openai/gpt-5-preview", name: "GPT-5 Preview" },
+    { slug: "openai/o1", name: "OpenAI o1" },
+    { slug: "deepseek/deepseek-v4-pro", name: "DeepSeek V4 Pro" },
+    { slug: "deepseek/deepseek-v4-flash", name: "DeepSeek V4 Flash" },
+    { slug: "qwen/qwen3.7-plus", name: "Qwen 3.7 Plus" },
+    { slug: "xiaomi/mimo-v2.5", name: "MiMo V2.5" },
+    { slug: "tencent/hy3-preview", name: "Hunyuan 3 Preview" },
+    { slug: "minimax/minimax-m3", name: "MiniMax M3" },
+    { slug: "baichuan/kimi-k2", name: "Kimi K2" },
+    { slug: "glm/glm-5.1", name: "GLM 5.1" },
+    { slug: "custom", name: "Custom Model ID..." },
+  ];
 
   // Load key from store on component mount
   const unsubscribe = apiKey.subscribe((key) => {
@@ -18,11 +52,6 @@
 
   function close() {
     dispatch("close");
-  }
-
-  function saveApiKey() {
-    apiKey.set(API_KEY);
-    close();
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -54,13 +83,53 @@
           placeholder="Paste your HCAI API key here"
           bind:value={API_KEY}
         />
-        <button class="saveBtn" on:click={saveApiKey}>Save</button>
       </div>
       <span
         >Get your Key at: <a target="_blank" href="https://ai.hackclub.com"
           >HCAI</a
         ></span
       >
+      <div class="settings-item">
+        <label for="modelSelect">Language Model</label>
+        <select id="modelSelect" bind:value={$selectedModel}>
+          {#each models as model}
+            <option value={model.slug}>{model.name}</option>
+          {/each}
+        </select>
+      </div>
+      {#if $selectedModel === "custom"}
+        <div class="settings-item">
+          <label for="customModeInput">Custom Model ID</label>
+          <input
+            type="text"
+            id="customModeInput"
+            placeholder="eg. anthropic/mythos-latest"
+            bind:value={$customModelId}
+          />
+        </div>
+      {/if}
+      <div class="settings-item">
+        <label for="personaSelect">Model Persona</label>
+        <select id="personaSelect" bind:value={$selectedPersona}>
+          <option value="jules">Jules (Quirky & Warm)</option>
+          <option value="jade">Jade (Cool & Sarcastic)</option>
+          <option value="jasper">Jasper (Technical Coder)</option>
+          <option value="onyx">Onyx (Creative Writer)</option>
+          <option value="custom">Custom System Prompt...</option>
+        </select>
+      </div>
+
+      {#if $selectedPersona === "custom"}
+        <div class="settings-item">
+          <label for="customPrompt">Custom System Prompt</label>
+          <textarea
+            id="customPrompt"
+            placeholder="You are a helpful AI assistant..."
+            bind:value={$customSystemPrompt}
+            rows="4"
+          ></textarea>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -175,5 +244,21 @@
 
   .saveBtn:hover {
     opacity: 0.9;
+  }
+
+  input[type="text"],
+  select,
+  textarea {
+    padding: 10px 12px;
+    background: var(--color-bg);
+    border: var(--border-thin) solid var(--color-border-muted);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 6px var(--color-shadow);
+    width: 100%;
+    font-size: 14px;
+    color: #222;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
   }
 </style>

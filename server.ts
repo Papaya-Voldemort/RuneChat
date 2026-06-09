@@ -23,6 +23,9 @@ const corsHeaders = {
 interface ChatRequestBody {
   messages?: any[];
   apiKey?: string;
+  model?: string;
+  persona?: string;
+  customPrompt?: string;
 }
 
 async function serveClient(pathname: string): Promise<Response> {
@@ -68,7 +71,8 @@ Bun.serve({
 
     if (url.pathname === "/api/chat" && req.method === "POST") {
       try {
-        const { messages, apiKey } = (await req.json()) as ChatRequestBody;
+        const { messages, apiKey, model, persona, customPrompt } =
+          (await req.json()) as ChatRequestBody;
 
         if (!apiKey) {
           return Response.json(
@@ -80,7 +84,13 @@ Bun.serve({
           );
         }
 
-        const response = await streamChat(messages ?? [], apiKey);
+        const response = await streamChat(
+          messages ?? [],
+          apiKey,
+          model,
+          persona,
+          customPrompt,
+        );
 
         const headers = new Headers(response.headers);
         Object.entries(corsHeaders).forEach(([key, value]) =>
