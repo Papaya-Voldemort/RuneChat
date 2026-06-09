@@ -233,7 +233,14 @@
     max-width: 100%;
   }
 
+  .settings-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
   input[type="text"],
+  input[type="number"],
   select,
   textarea {
     padding: 10px 12px;
