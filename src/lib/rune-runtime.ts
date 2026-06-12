@@ -632,46 +632,217 @@ export const runeScript = `
     },
 
     createBarChart: function(elementId, values, labels) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-      const max = Math.max(...values, 1);
-      let html = '<div class="rune-flex rune-row rune-gap-md" style="align-items: flex-end; height: 110px; border-bottom: 2px solid var(--color-border-muted); padding-bottom: 4px;">';
-      values.forEach(function(val, i) {
-        const height = (val / max) * 100;
-        const label = labels ? labels[i] : '';
-        html += '<div class="rune-col" style="flex: 1; align-items: center;">' +
-                  '<div class="rune-progress-bar" style="width: 24px; height: ' + height + '%; background-color: var(--color-primary); border-radius: 4px 4px 0 0;" title="' + val + '"></div>' +
-                  '<span class="rune-text" style="font-size: 10px; margin-top: 4px; font-weight:600;">' + label + '</span>' +
-                '</div>';
-      });
-      html += '</div>';
-      el.innerHTML = html;
+      try {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        if (!values || values.length === 0) {
+          el.innerHTML = '<div class="rune-text" style="text-align:center;padding:20px;">No data available</div>';
+          return;
+        }
+
+        const width = 400;
+        const height = 200;
+        const paddingLeft = 40;
+        const paddingRight = 20;
+        const paddingTop = 20;
+        const paddingBottom = 30;
+
+        const chartWidth = width - paddingLeft - paddingRight;
+        const chartHeight = height - paddingTop - paddingBottom;
+
+        const max = Math.max(...values, 1);
+        const barGap = 12;
+        const totalGaps = values.length - 1;
+        const barWidth = Math.max(4, (chartWidth - (barGap * totalGaps)) / values.length);
+
+        let gridHtml = '';
+        const ticks = 4;
+        for (let i = 0; i <= ticks; i++) {
+          const val = Math.round((max / ticks) * i);
+          const y = chartHeight + paddingTop - (i * (chartHeight / ticks));
+          gridHtml += '<line x1="' + paddingLeft + '" y1="' + y + '" x2="' + (width - paddingRight) + '" y2="' + y + '" stroke="var(--color-border-muted)" stroke-width="1" stroke-dasharray="3,3" />' +
+                      '<text x="' + (paddingLeft - 8) + '" y="' + (y + 3) + '" font-size="9" fill="#78716c" text-anchor="end">' + val + '</text>';
+        }
+
+        const barsHtml = values.map(function(val, i) {
+          const h = (val / max) * chartHeight;
+          const x = paddingLeft + (i * (barWidth + barGap));
+          const y = chartHeight + paddingTop - h;
+          const label = labels ? (labels[i] || '') : '';
+          const shortenedLabel = label.length > 10 ? label.slice(0, 8) + '..' : label;
+
+          return '<g style="cursor: pointer;">' +
+                   '<rect x="' + (x - barGap/2) + '" y="' + paddingTop + '" width="' + (barWidth + barGap) + '" height="' + chartHeight + '" fill="transparent" />' +
+                   '<rect x="' + x + '" y="' + (chartHeight + paddingTop) + '" width="' + barWidth + '" height="0" fill="url(#bar-grad-' + elementId + ')" rx="4" ry="4">' +
+                     '<animate attributeName="y" to="' + y + '" dur="0.6s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.4, 0, 0.2, 1" />' +
+                     '<animate attributeName="height" to="' + h + '" dur="0.6s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.4, 0, 0.2, 1" />' +
+                   '</rect>' +
+                   '<text x="' + (x + barWidth/2) + '" y="' + (y - 6) + '" font-size="10" font-weight="700" fill="var(--color-primary)" text-anchor="middle" opacity="0">' +
+                     '<animate attributeName="opacity" to="1" begin="0.4s" dur="0.3s" fill="freeze" />' +
+                     val +
+                   '</text>' +
+                   '<text x="' + (x + barWidth/2) + '" y="' + (height - paddingBottom + 16) + '" font-size="9" fill="#57534e" text-anchor="middle" font-weight="600">' +
+                     shortenedLabel +
+                     '<title>' + label + '</title>' +
+                   '</text>' +
+                 '</g>';
+        }).join('');
+
+        el.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height + '" style="width: 100%; height: auto; overflow: visible; display: block;">' +
+                         '<defs>' +
+                           '<linearGradient id="bar-grad-' + elementId + '" x1="0" y1="0" x2="0" y2="1">' +
+                             '<stop offset="0%" stop-color="#e11d48" />' +
+                             '<stop offset="100%" stop-color="var(--color-primary)" />' +
+                           '</linearGradient>' +
+                         '</defs>' +
+                         gridHtml +
+                         barsHtml +
+                         '<line x1="' + paddingLeft + '" y1="' + (chartHeight + paddingTop) + '" x2="' + (width - paddingRight) + '" y2="' + (chartHeight + paddingTop) + '" stroke="var(--color-border)" stroke-width="1.5" />' +
+                       '</svg>';
+      } catch (err) {
+        console.error("Rune createBarChart error:", err);
+      }
     },
 
     createLineChart: function(elementId, values, labels) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-      const width = 300;
-      const height = 130;
-      const padding = 20;
-      const max = Math.max(...values, 1);
-      const points = values.map(function(val, i) {
-        const x = padding + (i * (width - 2 * padding) / (values.length - 1));
-        const y = height - padding - (val * (height - 2 * padding) / max);
-        return x + ',' + y;
-      }).join(' ');
-      
-      let svg = '<svg viewBox="0 0 ' + width + ' ' + height + '" style="width: 100%; height: auto; overflow: visible;">' +
-        '<polyline fill="none" stroke="var(--color-primary)" stroke-width="2.5" points="' + points + '" />' +
-        values.map(function(val, i) {
-          const x = padding + (i * (width - 2 * padding) / (values.length - 1));
-          const y = height - padding - (val * (height - 2 * padding) / max);
-          return '<circle cx="' + x + '" cy="' + y + '" r="3.5" fill="var(--color-primary)" />' +
-                 '<text x="' + x + '" y="' + (y - 8) + '" font-size="8" font-family="sans-serif" text-anchor="middle" font-weight="600" fill="#57534e">' + val + '</text>' +
-                 '<text x="' + x + '" y="' + (height - 4) + '" font-size="8" font-family="sans-serif" text-anchor="middle" fill="#78716c">' + (labels ? labels[i] : '') + '</text>';
-        }).join('') +
-      '</svg>';
-      el.innerHTML = svg;
+      try {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        if (!values || values.length === 0) {
+          el.innerHTML = '<div class="rune-text" style="text-align:center;padding:20px;">No data available</div>';
+          return;
+        }
+
+        const width = 400;
+        const height = 200;
+        const paddingLeft = 40;
+        const paddingRight = 20;
+        const paddingTop = 25;
+        const paddingBottom = 30;
+
+        const chartWidth = width - paddingLeft - paddingRight;
+        const chartHeight = height - paddingTop - paddingBottom;
+
+        const max = Math.max(...values, 1);
+        
+        const points = values.map(function(val, i) {
+          const x = paddingLeft + (i * (chartWidth / (values.length - 1 || 1)));
+          const y = chartHeight + paddingTop - ((val / max) * chartHeight);
+          return { x: x, y: y, val: val, label: labels ? (labels[i] || '') : '' };
+        });
+
+        let linePath = '';
+        let areaPath = '';
+
+        if (points.length > 0) {
+          linePath = 'M ' + points[0].x + ' ' + points[0].y;
+          for (let i = 1; i < points.length; i++) {
+            linePath += ' L ' + points[i].x + ' ' + points[i].y;
+          }
+          
+          areaPath = linePath + ' L ' + points[points.length - 1].x + ' ' + (chartHeight + paddingTop) + 
+                               ' L ' + points[0].x + ' ' + (chartHeight + paddingTop) + ' Z';
+        }
+
+        let gridHtml = '';
+        const ticks = 4;
+        for (let i = 0; i <= ticks; i++) {
+          const val = Math.round((max / ticks) * i);
+          const y = chartHeight + paddingTop - (i * (chartHeight / ticks));
+          gridHtml += '<line x1="' + paddingLeft + '" y1="' + y + '" x2="' + (width - paddingRight) + '" y2="' + y + '" stroke="var(--color-border-muted)" stroke-width="1" stroke-dasharray="3,3" />' +
+                      '<text x="' + (paddingLeft - 8) + '" y="' + (y + 3) + '" font-size="9" fill="#78716c" text-anchor="end">' + val + '</text>';
+        }
+
+        const dotsHtml = points.map(function(p, i) {
+          return '<g style="cursor: pointer;">' +
+                   '<circle cx="' + p.x + '" cy="' + p.y + '" r="4.5" fill="#ffffff" stroke="var(--color-primary)" stroke-width="2.5" />' +
+                   '<text x="' + p.x + '" y="' + (p.y - 10) + '" font-size="9" font-weight="700" fill="var(--color-primary)" text-anchor="middle">' + p.val + '</text>' +
+                   '<text x="' + p.x + '" y="' + (height - paddingBottom + 16) + '" font-size="9" fill="#57534e" text-anchor="middle" font-weight="600">' + p.label + '</text>' +
+                 '</g>';
+        }).join('');
+
+        el.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height + '" style="width: 100%; height: auto; overflow: visible; display: block;">' +
+                         '<defs>' +
+                           '<linearGradient id="area-grad-' + elementId + '" x1="0" y1="0" x2="0" y2="1">' +
+                             '<stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.3" />' +
+                             '<stop offset="100%" stop-color="var(--color-primary)" stop-opacity="0.0" />' +
+                           '</linearGradient>' +
+                         '</defs>' +
+                         gridHtml +
+                         '<path d="' + areaPath + '" fill="url(#area-grad-' + elementId + ')" />' +
+                         '<path d="' + linePath + '" fill="none" stroke="var(--color-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />' +
+                         dotsHtml +
+                         '<line x1="' + paddingLeft + '" y1="' + (chartHeight + paddingTop) + '" x2="' + (width - paddingRight) + '" y2="' + (chartHeight + paddingTop) + '" stroke="var(--color-border)" stroke-width="1.5" />' +
+                       '</svg>';
+      } catch (err) {
+        console.error("Rune createLineChart error:", err);
+      }
+    },
+
+    createDonutChart: function(elementId, values, labels) {
+      try {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        if (!values || values.length === 0) {
+          el.innerHTML = '<div class="rune-text" style="text-align:center;padding:20px;">No data available</div>';
+          return;
+        }
+
+        const width = 300;
+        const height = 180;
+        const radius = 60;
+        const strokeWidth = 18;
+        const cx = 90;
+        const cy = 90;
+        const circumference = 2 * Math.PI * radius;
+
+        const sum = values.reduce(function(a, b) { return a + b; }, 0);
+        const colors = ['var(--color-primary)', '#ea580c', '#16a34a', '#2563eb', '#4f46e5', '#db2777', '#7c3aed'];
+
+        let currentOffset = 0;
+        
+        const slicesHtml = values.map(function(val, i) {
+          const percent = sum > 0 ? (val / sum) : 0;
+          const dashArray = (percent * circumference) + ' ' + circumference;
+          const dashOffset = currentOffset;
+          currentOffset -= (percent * circumference);
+          const color = colors[i % colors.length];
+          const label = labels ? (labels[i] || '') : '';
+
+          return '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="transparent" ' +
+                   'stroke="' + color + '" stroke-width="' + strokeWidth + '" ' +
+                   'stroke-dasharray="' + dashArray + '" stroke-dashoffset="' + dashOffset + '" ' +
+                   'transform="rotate(-90 ' + cx + ' ' + cy + ')" style="transition: stroke-width 0.2s ease;">' +
+                   '<title>' + label + ': ' + val + ' (' + Math.round(percent * 100) + '%)</title>' +
+                 '</circle>';
+        }).join('');
+
+        const legendHtml = values.map(function(val, i) {
+          const percent = sum > 0 ? Math.round((val / sum) * 100) : 0;
+          const color = colors[i % colors.length];
+          const label = labels ? (labels[i] || '') : '';
+          return '<div class="rune-row rune-gap-sm" style="font-size: 11px; margin-bottom: 4px;">' +
+                   '<span style="width: 10px; height: 10px; border-radius: 2px; background-color: ' + color + '; flex-shrink:0;"></span>' +
+                   '<span class="rune-text" style="margin:0; font-weight:600; color:#44403c;">' + label + ' (' + percent + '%)</span>' +
+                 '</div>';
+        }).join('');
+
+        el.innerHTML = '<div class="rune-flex rune-row rune-gap-lg" style="align-items: center; justify-content: center; width: 100%;">' +
+                         '<div style="position: relative; width: ' + (width/1.6) + 'px; height: ' + height + 'px;">' +
+                           '<svg viewBox="0 0 ' + (cx * 2) + ' ' + (cy * 2) + '" style="width: 100%; height: 100%; transform: rotate(0deg);">' +
+                             slicesHtml +
+                             '<circle cx="' + cx + '" cy="' + cy + '" r="' + (radius - strokeWidth/2 - 1) + '" fill="#fafaf9" />' +
+                             '<text x="' + cx + '" y="' + (cy - 2) + '" font-size="11" font-weight="700" fill="#78716c" text-anchor="middle">TOTAL</text>' +
+                             '<text x="' + cx + '" y="' + (cy + 12) + '" font-size="14" font-weight="800" fill="var(--color-primary)" text-anchor="middle">' + sum + '</text>' +
+                           '</svg>' +
+                         '</div>' +
+                         '<div class="rune-col" style="flex: 1; align-items: flex-start; justify-content: center;">' +
+                           legendHtml +
+                         '</div>' +
+                       '</div>';
+      } catch (err) {
+        console.error("Rune createDonutChart error:", err);
+      }
     }
   };
 `;
