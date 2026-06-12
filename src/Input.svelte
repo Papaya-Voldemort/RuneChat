@@ -14,6 +14,9 @@
     customSystemPrompt,
     customModelId,
     maxTokens,
+    userProfileName,
+    userProfileAbout,
+    enableLayoutPreviews,
   } from "./lib/stores/settings";
 
   import { sendMessageIcon } from "./lib/assets";
@@ -130,6 +133,9 @@
           persona: activePersona,
           customPrompt: activePrompt,
           maxTokens: activeMaxTokens ? Number(activeMaxTokens) : undefined,
+          userProfileName: get(userProfileName),
+          userProfileAbout: get(userProfileAbout),
+          enableLayoutPreviews: get(enableLayoutPreviews),
         }),
       });
 
@@ -153,8 +159,8 @@
         const chunk = decoder.decode(value, { stream: true });
         fullContent += chunk;
 
-        const { thinking, text } = parseContent(fullContent);
-        updateAssistantParts(assistantId, thinking, text);
+        const { thinking, parts } = parseContent(fullContent);
+        updateAssistantParts(assistantId, thinking, parts);
       }
 
       const flushChunk = decoder.decode();
@@ -166,8 +172,8 @@
         throw new Error("Model returned an empty response");
       }
 
-      const { thinking, text } = parseContent(fullContent);
-      updateAssistantParts(assistantId, thinking, text);
+      const { thinking, parts } = parseContent(fullContent);
+      updateAssistantParts(assistantId, thinking, parts);
     } catch (error) {
       console.error("Chat error:", error);
       const errorText =
@@ -182,25 +188,25 @@
     }
   }
 
-  function parseContent(content: string): { thinking: string; text: string } {
+  function parseContent(content: string): { thinking: string; parts: MessagePart[] } {
     const thinkingParts: string[] = [];
-    const textParts: string[] = [];
+    const bodyTextParts: string[] = [];
     let cursor = 0;
 
+    // 1. Separate thinking process block from the main body content
     while (cursor < content.length) {
       const openIndex = content.indexOf(OPEN_THINKING_TAG, cursor);
 
       if (openIndex === -1) {
-        textParts.push(content.slice(cursor));
+        bodyTextParts.push(content.slice(cursor));
         break;
       }
 
-      textParts.push(content.slice(cursor, openIndex));
+      bodyTextParts.push(content.slice(cursor, openIndex));
       const thinkingStart = openIndex + OPEN_THINKING_TAG.length;
       const closeIndex = content.indexOf(CLOSE_THINKING_TAG, thinkingStart);
 
       if (closeIndex === -1) {
-        // Stream is still in thinking mode: surface partial reasoning immediately.
         thinkingParts.push(content.slice(thinkingStart));
         break;
       }
@@ -209,13 +215,41 @@
       cursor = closeIndex + CLOSE_THINKING_TAG.length;
     }
 
+    const thinkingStr = thinkingParts.join("");
+    const bodyStr = bodyTextParts.join("");
+
+    // 2. Parse the body text for ```rune-layout code blocks
+    const parts: MessagePart[] = [];
+    const layoutRegex = /```rune-layout\n([\s\S]*?)(?:```|$)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = layoutRegex.exec(bodyStr)) !== null) {
+      // Add text before the layout block
+      if (match.index > lastIndex) {
+        parts.push({ type: "text", text: bodyStr.slice(lastIndex, match.index) });
+      }
+      // Add the layout code itself
+      parts.push({ type: "layout", text: match[1] });
+      lastIndex = layoutRegex.lastIndex;
+    }
+
+    // Add remaining body text after layout blocks
+    if (lastIndex < bodyStr.length) {
+      parts.push({ type: "text", text: bodyStr.slice(lastIndex) });
+    }
+
     return {
-      thinking: thinkingParts.join(""),
-      text: textParts.join(""),
+      thinking: thinkingStr,
+      parts,
     };
   }
 
-  function updateAssistantParts(id: string, thinking: string, text: string) {
+  function updateAssistantParts(
+    id: string,
+    thinking: string,
+    textOrParts: string | MessagePart[],
+  ) {
     messages.update((msgs) => {
       const updated = [...msgs];
       const assistantMsg = updated.find((m) => m.id === id);
@@ -228,8 +262,12 @@
         assistantMsg.parts.push({ type: "reasoning", text: thinking });
       }
 
-      if (text) {
-        assistantMsg.parts.push({ type: "text", text });
+      if (typeof textOrParts === "string") {
+        if (textOrParts) {
+          assistantMsg.parts.push({ type: "text", text: textOrParts });
+        }
+      } else if (Array.isArray(textOrParts)) {
+        assistantMsg.parts.push(...textOrParts);
       }
 
       return updated;
@@ -240,10 +278,13 @@
     const msgs = get(messages);
     return msgs.flatMap((msg: Message) => {
       const parts = msg.parts || [];
-      const textContent = parts
-        .filter((part) => part.type === "text")
-        .map((part) => part.text)
-        .join("") || msg.content || "";
+      const textContent =
+        parts
+          .filter((part) => part.type === "text")
+          .map((part) => part.text)
+          .join("") ||
+        msg.content ||
+        "";
 
       if (!textContent) return [];
 

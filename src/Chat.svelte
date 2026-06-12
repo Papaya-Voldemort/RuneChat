@@ -14,7 +14,8 @@
     messages,
     draftPrompt,
   } from "./lib/stores/chat";
-  import { selectedPersona } from "./lib/stores/settings";
+  import { selectedPersona, enableLayoutPreviews } from "./lib/stores/settings";
+  import RuneLayoutPreview from "./RuneLayoutPreview.svelte";
 
   let messagesContainer: HTMLElement;
 
@@ -44,10 +45,14 @@
 
   async function copyBtn(message: any) {
     try {
-      const text = message.parts
+      const parts = message.parts || [];
+      let text = parts
         .filter((p: any) => p.type === "text")
         .map((p: any) => p.text)
         .join("\n");
+      if (!text) {
+        text = message.content || "";
+      }
       await navigator.clipboard.writeText(text);
     } catch (err) {
       console.error("Failed to copy: ", err);
@@ -134,14 +139,25 @@
               </details>
             {/if}
 
-            <div class="message-bubble">
-              {@html renderMarkdown(
-                message.parts
-                  .filter((p) => p.type === "text")
-                  .map((p) => p.text)
-                  .join(""),
-              )}
-            </div>
+            {#each message.parts as part}
+              {#if part.type === "text"}
+                {#if part.text.trim()}
+                  <div class="message-bubble">
+                    {@html renderMarkdown(part.text)}
+                  </div>
+                {/if}
+              {:else if part.type === "layout"}
+                {#if $enableLayoutPreviews}
+                  <div class="layouts-container">
+                    <RuneLayoutPreview code={part.text} />
+                  </div>
+                {:else}
+                  <div class="message-bubble">
+                    {@html renderMarkdown("```html\n" + part.text + "\n```")}
+                  </div>
+                {/if}
+              {/if}
+            {/each}
           {:else}
             <div class="message-bubble">
               {#if message.role === "assistant" && !message.content}
@@ -553,5 +569,13 @@
     font-size: 0.8rem;
     color: #666;
     line-height: 1.3;
+  }
+
+  .layouts-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 0.5rem;
   }
 </style>

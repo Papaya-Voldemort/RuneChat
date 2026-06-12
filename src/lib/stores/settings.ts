@@ -30,6 +30,23 @@ export const maxTokens = writable<string>(
     : "4096",
 );
 
+export const userProfileName = writable<string>(
+  typeof localStorage !== "undefined"
+    ? localStorage.getItem("runechat_user_profile_name") || ""
+    : "",
+);
+export const userProfileAbout = writable<string>(
+  typeof localStorage !== "undefined"
+    ? localStorage.getItem("runechat_user_profile_about") || ""
+    : "",
+);
+
+export const enableLayoutPreviews = writable<boolean>(
+  typeof localStorage !== "undefined"
+    ? localStorage.getItem("runechat_enable_layouts") !== "false"
+    : true,
+);
+
 if (typeof localStorage !== "undefined") {
   selectedModel.subscribe((val) => localStorage.setItem("runechat_model", val));
   selectedPersona.subscribe((val) =>
@@ -45,5 +62,15 @@ if (typeof localStorage !== "undefined") {
 
   maxTokens.subscribe((val) =>
     localStorage.setItem("runechat_max_tokens", val),
+  );
+
+  userProfileName.subscribe((val) =>
+    localStorage.setItem("runechat_user_profile_name", val),
+  );
+  userProfileAbout.subscribe((val) =>
+    localStorage.setItem("runechat_user_profile_about", val),
+  );
+  enableLayoutPreviews.subscribe((val) =>
+    localStorage.setItem("runechat_enable_layouts", val ? "true" : "false"),
   );
 }

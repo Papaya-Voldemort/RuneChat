@@ -14,6 +14,9 @@ export async function streamChat(
   persona?: string,
   customPrompt?: string,
   maxTokens?: number,
+  userProfileName?: string,
+  userProfileAbout?: string,
+  enableLayoutPreviews?: boolean,
 ) {
   if (!apiKey) {
     throw new Error("API key is required");
@@ -108,7 +111,83 @@ You believe that truth is best understood through metaphor, resonance, and narra
   if (persona === "custom") {
     systemPrompt = customPrompt || "You are a helpful AI assistant.";
   } else {
-    systemPrompt = PERSONA_CONFIGS[personaKey] || PERSONA_CONFIGS["jules"] || "";
+    systemPrompt =
+      PERSONA_CONFIGS[personaKey] || PERSONA_CONFIGS["jules"] || "";
+  }
+
+  // 1. Build and prepend the User Profile context
+  const userInstructions = [
+    userProfileName
+      ? `The user's name is: ${userProfileName}. Address them by their name when appropriate.`
+      : "",
+    userProfileAbout
+      ? `Important context about the user:\n${userProfileAbout}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  if (userInstructions) {
+    systemPrompt = `${userInstructions}\n\n${systemPrompt}`;
+  }
+
+  // 2. Instruct the model on prebuilt interactive layout components (only if enabled)
+  if (enableLayoutPreviews !== false) {
+    systemPrompt += `\n\n[IN-CHAT INTERACTIVE PREVIEW CONTROLS]
+If you want to render interactive UI tools, calculators, layout designs, grids, sliders, or components, you can write them directly inside a custom code block with the identifier \`rune-layout\`. Example:
+\`\`\`rune-layout
+<div class="rune-card rune-col rune-gap-md">
+  <h3 class="rune-title">Layout Title</h3>
+  <p class="rune-text">Interactive controls:</p>
+  <button class="rune-btn rune-btn-primary" onclick="alert('Hello!')">Interact</button>
+</div>
+\`\`\`
+Guidelines:
+- Keep blocks low-token! Skip styling and CSS. NEVER write custom CSS styles or inline styles.
+- Leverage the prebuilt Rune UI classes that are loaded inside the preview pane.
+- You can include a <script> block to add vanilla JS interactivity (state, click events, calculations).
+
+Available Classes & HTML Elements:
+- Containers:
+  * .rune-card (white panel, border, shadow, rounded corners)
+  * .rune-flex, .rune-row, .rune-col (standard layout displays)
+  * .rune-grid-2, .rune-grid-3 (grid displays)
+  * .rune-gap-sm (6px gap), .rune-gap-md (12px gap), .rune-gap-lg (20px gap)
+- Dynamic Tabs Component:
+  * Tab buttons wrapper: <div class="rune-tabs">
+  * Tab buttons inside wrapper: <button class="rune-tab-btn active" onclick="showTab(event, 'tab1')">Tab Title</button>
+  * Tab content pane: <div id="tab1" class="rune-tab-content active">Content...</div>
+  * Put this script logic inside <script> tags to make it interactive:
+    function showTab(e, id) {
+      document.querySelectorAll('.rune-tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.rune-tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      e.currentTarget.classList.add('active');
+    }
+- Headers & Text:
+  * .rune-title (bold title, primary red accent color)
+  * .rune-subtitle (medium bold header)
+  * .rune-text (muted body font)
+- Interactive Fields:
+  * .rune-input (styled text/number input fields)
+  * .rune-select (styled dropdown selection field)
+  * .rune-slider (styled range slider control)
+- Status Badges / Pills:
+  * .rune-badge (grey indicator pill)
+  * .rune-badge-success (green success badge)
+  * .rune-badge-warning (amber/orange warning badge)
+  * .rune-badge-danger (red danger/alert badge)
+- Data Tables:
+  * Use HTML <table> with class .rune-table. Use standard <thead>, <tbody>, <tr>, <th>, and <td> tags. Table rows will alternate colors automatically.
+- Accordion / Collapsible Card:
+  * Use the HTML <details class="rune-accordion"> element. Place a <summary class="rune-accordion-summary">Title</summary> inside, followed by a <div class="rune-accordion-content">Content</div> block.
+- Buttons:
+  * .rune-btn (default grey hover button)
+  * .rune-btn-primary (primary colored accent button)
+  * .rune-btn-secondary (outline/ghost button)`;
+  } else {
+    systemPrompt += `\n\n[CRITICAL NOTE]
+Do NOT output custom \`rune-layout\` code blocks or visual layout blocks. Output standard markdown text and standard code blocks instead.`;
   }
 
   const result = await streamText({

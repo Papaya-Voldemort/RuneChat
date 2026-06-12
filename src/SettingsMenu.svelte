@@ -8,6 +8,9 @@
     customSystemPrompt,
     customModelId,
     maxTokens,
+    userProfileName,
+    userProfileAbout,
+    enableLayoutPreviews,
   } from "./lib/stores/settings";
 
   const dispatch = createEventDispatcher();
@@ -82,6 +85,25 @@
           >HCAI</a
         ></span
       >
+      <!-- User Profile Fields -->
+      <div class="settings-item">
+        <label for="userProfileName">Your Name</label>
+        <input
+          type="text"
+          id="userProfileName"
+          placeholder="What should the AI call you?"
+          bind:value={$userProfileName}
+        />
+      </div>
+      <div class="settings-item">
+        <label for="userProfileAbout">About You / Custom Instructions</label>
+        <textarea
+          id="userProfileAbout"
+          placeholder="e.g., Coding preferences, target frameworks, tone rules..."
+          bind:value={$userProfileAbout}
+          rows="3"
+        ></textarea>
+      </div>
       <div class="settings-item">
         <label for="modelSelect">Language Model</label>
         <select id="modelSelect" bind:value={$selectedModel}>
@@ -131,6 +153,17 @@
           placeholder="e.g. 4096"
           bind:value={$maxTokens}
         />
+      </div>
+      <div class="settings-item toggle-row">
+        <label for="enableLayoutsToggle">Visual Layout Previews</label>
+        <label class="switch-container">
+          <input
+            type="checkbox"
+            id="enableLayoutsToggle"
+            bind:checked={$enableLayoutPreviews}
+          />
+          <span class="switch-slider"></span>
+        </label>
       </div>
     </div>
   </div>
@@ -254,5 +287,59 @@
     font-family: inherit;
     outline: none;
     box-sizing: border-box;
+  }
+
+  /* Custom toggle switches */
+  .toggle-row {
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0;
+  }
+
+  .switch-container {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .switch-container input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .switch-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: var(--color-bg);
+    transition: 0.2s ease;
+    border-radius: 24px;
+    border: 1px solid var(--color-border-muted);
+  }
+
+  .switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--color-border-muted);
+    transition: 0.2s ease;
+    border-radius: 50%;
+  }
+
+  input:checked + .switch-slider {
+    border-color: var(--color-primary);
+  }
+
+  input:checked + .switch-slider:before {
+    transform: translateX(20px);
+    background-color: var(--color-primary);
   }
 </style>

@@ -5,7 +5,8 @@ export type Role = "user" | "assistant";
 
 export type MessagePart =
   | { type: "reasoning"; text: string }
-  | { type: "text"; text: string };
+  | { type: "text"; text: string }
+  | { type: "layout"; text: string };
 
 export interface Message extends ChatMessage {
   role: Role;
@@ -105,7 +106,9 @@ async function ensureActiveChat(): Promise<Chat> {
   const all = await refreshChats();
   const storedId = getStoredActiveChatId();
 
-  let next = storedId ? all.find((chat) => chat.id === storedId) ?? null : null;
+  let next = storedId
+    ? (all.find((chat) => chat.id === storedId) ?? null)
+    : null;
   if (!next) {
     const legacyMessages = all.length ? [] : loadLegacyMessages();
     next =
