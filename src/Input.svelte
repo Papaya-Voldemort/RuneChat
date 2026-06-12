@@ -3,9 +3,11 @@
     initializeChatStore,
     messages,
     type Message,
+    type MessagePart,
     renameChat,
     activeChatId,
     draftPrompt,
+    isStreaming,
   } from "./lib/stores/chat";
 
   import {
@@ -101,6 +103,7 @@
     }
 
     loading = true;
+    isStreaming.set(true);
     const assistantId = crypto.randomUUID();
 
     messages.update((msgs) => [
@@ -185,6 +188,7 @@
       );
     } finally {
       loading = false;
+      isStreaming.set(false);
     }
   }
 
@@ -230,7 +234,7 @@
         parts.push({ type: "text", text: bodyStr.slice(lastIndex, match.index) });
       }
       // Add the layout code itself
-      parts.push({ type: "layout", text: match[1] });
+      parts.push({ type: "layout", text: match[1] ?? "" });
       lastIndex = layoutRegex.lastIndex;
     }
 

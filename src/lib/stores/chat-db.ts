@@ -11,6 +11,7 @@ export interface ChatMessage {
   role: ChatRole;
   parts: ChatMessagePart[];
   timestamp: string;
+  content?: string;
   [key: string]: unknown;
 }
 

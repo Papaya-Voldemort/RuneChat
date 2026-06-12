@@ -13,6 +13,7 @@
     initializeChatStore,
     messages,
     draftPrompt,
+    isStreaming,
   } from "./lib/stores/chat";
   import { selectedPersona, enableLayoutPreviews } from "./lib/stores/settings";
   import RuneLayoutPreview from "./RuneLayoutPreview.svelte";
@@ -119,7 +120,7 @@
         </div>
       </div>
     {:else}
-      {#each $messages as message (message.id)}
+      {#each $messages as message, msgIndex (message.id)}
         <div class="message-wrapper {message.role}">
           {#if message.parts?.length}
             {#if message.parts.some((p) => p.type === "reasoning")}
@@ -139,7 +140,7 @@
               </details>
             {/if}
 
-            {#each message.parts as part}
+            {#each message.parts as part, partIndex}
               {#if part.type === "text"}
                 {#if part.text.trim()}
                   <div class="message-bubble">
@@ -149,7 +150,10 @@
               {:else if part.type === "layout"}
                 {#if $enableLayoutPreviews}
                   <div class="layouts-container">
-                    <RuneLayoutPreview code={part.text} />
+                    <RuneLayoutPreview 
+                      code={part.text} 
+                      isBuilding={$isStreaming && msgIndex === $messages.length - 1 && partIndex === message.parts.length - 1} 
+                    />
                   </div>
                 {:else}
                   <div class="message-bubble">

@@ -36,6 +36,7 @@ export const chats = writable<Chat[]>([]);
 export const activeChatId = writable<string | null>(null);
 export const messages = writable<Message[]>([]);
 export const draftPrompt = writable<string>("");
+export const isStreaming = writable<boolean>(false);
 
 function getStorage(): StorageLike | null {
   const storage = (globalThis as { localStorage?: StorageLike }).localStorage;

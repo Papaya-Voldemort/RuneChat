@@ -143,42 +143,62 @@ If you want to render interactive UI tools, calculators, layout designs, grids, 
 </div>
 \`\`\`
 Guidelines:
-- Keep blocks low-token! Skip styling and CSS. NEVER write custom CSS styles or inline styles.
-- Leverage the prebuilt Rune UI classes that are loaded inside the preview pane.
-- You can include a <script> block to add vanilla JS interactivity (state, click events, calculations).
+- Keep blocks low-token! Skip custom CSS stylesheets and inline style definitions.
+- Leverage the prebuilt Rune UI classes loaded inside the sandboxed viewport.
+- You can trigger dynamic layout logic using the pre-injected global JS helpers on the \`window.rune\` object.
 
-Available Classes & HTML Elements:
-- Containers:
-  * .rune-card (white panel, border, shadow, rounded corners)
+Pre-injected window.rune Helper Functions & Utilities:
+- Declarative Reactivity (No JS required for basic bindings!):
+  * Add \`rune-model="keyName"\` to inputs (\`<input>\`, \`<select>\`, \`<textarea>\`) to bind their value.
+  * Add the attribute \`rune-text="keyName"\` to any standard HTML element (e.g., \`<span rune-text="keyName"></span>\`) to display the value of that state dynamically. Do NOT use \`<rune-text="keyName">\` as a custom HTML tag.
+  * Add \`rune-show="keyName"\` to dynamically show an element if the state is truthy (or \`rune-hide="keyName"\` to hide it).
+  * Update state programmatically inside scripts: \`rune.state.keyName = newValue\`. (Values are automatically updated on all bound DOM elements).
+- Interactive Toast System:
+  * Show small feedback overlay: \`rune.showToast('Copied!', 'success')\`. (Use 'success', 'warning', or 'danger' as the second parameter).
+- Modal Dialogs:
+  * Modal Primitive: \`<div id="myModal" class="rune-modal"><div class="rune-modal-content"><h3 class="rune-title">Confirm</h3><button class="rune-btn" onclick="rune.closeModal('myModal')">Cancel</button></div></div>\`
+  * Open modal in scripts: \`rune.showModal('myModal')\`
+  * Close modal in scripts: \`rune.closeModal('myModal')\`
+- Data Visualizations & Charting:
+  * Line Chart: \`<div id="lineChart"></div>\` and draw: \`rune.createLineChart('lineChart', [12, 19, 3, 5], ['Mon', 'Tue', 'Wed', 'Thu'])\`
+  * Bar Chart: \`<div id="barChart"></div>\` and draw: \`rune.createBarChart('barChart', [50, 80, 20, 95], ['A', 'B', 'C', 'D'])\`
+- Tabs Toggling:
+  * \`rune.showTab(event, 'tabId')\` -> Toggles tabs across navigation elements.
+- Progress bar tracker:
+  * \`rune.setProgress('progressBarId', percent)\` -> Toggles width animations.
+
+Available Prebuilt UI Elements:
+- Containers & Cards:
+  * .rune-card (base card panel, border, shadow, rounded corners)
+  * .rune-glass (semi-translucent glassmorphic panel with blur overlay)
   * .rune-flex, .rune-row, .rune-col (standard layout displays)
   * .rune-grid-2, .rune-grid-3 (grid displays)
   * .rune-gap-sm (6px gap), .rune-gap-md (12px gap), .rune-gap-lg (20px gap)
 - Dynamic Tabs Component:
   * Tab buttons wrapper: <div class="rune-tabs">
-  * Tab buttons inside wrapper: <button class="rune-tab-btn active" onclick="showTab(event, 'tab1')">Tab Title</button>
+  * Tab navigation trigger buttons: <button class="rune-tab-btn active" onclick="rune.showTab(event, 'tab1')">Tab Title</button>
   * Tab content pane: <div id="tab1" class="rune-tab-content active">Content...</div>
-  * Put this script logic inside <script> tags to make it interactive:
-    function showTab(e, id) {
-      document.querySelectorAll('.rune-tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.rune-tab-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      e.currentTarget.classList.add('active');
-    }
+- Progress Bars:
+  * Structure: <div class="rune-progress"><div id="progress-fill" class="rune-progress-bar"></div></div>
+  * Update using script: rune.setProgress('progress-fill', 75)
+- Toggle Switches:
+  * Structure: <label class="rune-switch"><input type="checkbox" /><span class="rune-switch-slider"></span></label>
+- Alert Banners:
+  * Banners: .rune-alert (with color states: .rune-alert-info, .rune-alert-success, .rune-alert-warning, .rune-alert-danger)
 - Headers & Text:
   * .rune-title (bold title, primary red accent color)
   * .rune-subtitle (medium bold header)
   * .rune-text (muted body font)
+- Avatars:
+  * Circular profile image: <img class="rune-avatar" src="..." />
 - Interactive Fields:
   * .rune-input (styled text/number input fields)
   * .rune-select (styled dropdown selection field)
   * .rune-slider (styled range slider control)
 - Status Badges / Pills:
-  * .rune-badge (grey indicator pill)
-  * .rune-badge-success (green success badge)
-  * .rune-badge-warning (amber/orange warning badge)
-  * .rune-badge-danger (red danger/alert badge)
+  * .rune-badge (grey indicator pill, with variations: .rune-badge-success, .rune-badge-warning, .rune-badge-danger)
 - Data Tables:
-  * Use HTML <table> with class .rune-table. Use standard <thead>, <tbody>, <tr>, <th>, and <td> tags. Table rows will alternate colors automatically.
+  * Use HTML <table> with class .rune-table. Use standard <thead>, <tbody>, <tr>, <th>, and <td> tags. Table rows alternate colors automatically on hover.
 - Accordion / Collapsible Card:
   * Use the HTML <details class="rune-accordion"> element. Place a <summary class="rune-accordion-summary">Title</summary> inside, followed by a <div class="rune-accordion-content">Content</div> block.
 - Buttons:
