@@ -62,6 +62,7 @@ async function serveClient(pathname: string): Promise<Response> {
 Bun.serve({
   port,
   hostname: host,
+  idleTimeout: 255,
 
   async fetch(req: Request) {
     const url = new URL(req.url);

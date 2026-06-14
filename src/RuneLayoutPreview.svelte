@@ -9,9 +9,27 @@
   let iframeElement: HTMLIFrameElement;
   let iframeHeight = 280;
 
+  let layoutTitle = "Rune Visual Layout";
+  $: {
+    const commentMatch = code ? code.match(/<!--\s*(?:rune-)?title:\s*([^\n-->]+?)\s*-->/i) : null;
+    if (commentMatch) {
+      layoutTitle = commentMatch[1].trim();
+    } else {
+      const attrMatch = code ? code.match(/(?:rune-|r-)?title=["']([^"']+)["']/i) : null;
+      if (attrMatch) {
+        layoutTitle = attrMatch[1].trim();
+      } else {
+        const tagMatch = code ? code.match(/<title>([\s\S]*?)<\/title>/i) : null;
+        layoutTitle = tagMatch ? tagMatch[1].trim() : "Rune Visual Layout";
+      }
+    }
+  }
+
   function handleMessage(event: MessageEvent) {
     if (event.data && event.data.type === "rune-resize") {
-      iframeHeight = Math.max(150, event.data.height + 25);
+      if (iframeElement && event.source === iframeElement.contentWindow) {
+        iframeHeight = Math.max(150, event.data.height);
+      }
     }
   }
 
@@ -42,29 +60,6 @@
           <\/script>
 
           ${userScripts}
-
-          <script>
-            function reportHeight() {
-              const wrapper = document.getElementById("rune-wrapper");
-              if (wrapper) {
-                window.parent.postMessage({
-                  type: "rune-resize",
-                  height: wrapper.offsetHeight || wrapper.scrollHeight
-                }, "*");
-              }
-            }
-
-            reportHeight();
-            window.addEventListener("load", reportHeight);
-
-            if (window.ResizeObserver) {
-              const wrapper = document.getElementById("rune-wrapper");
-              if (wrapper) {
-                const ro = new ResizeObserver(reportHeight);
-                ro.observe(wrapper);
-              }
-            }
-          <\/script>
         </body>
       </html>
     `;
@@ -132,7 +127,7 @@
 
 <div class="preview-container" class:building={isBuilding}>
   <div class="preview-header">
-    <span class="preview-tag">Rune Visual Layout</span>
+    <span class="preview-tag">{layoutTitle}</span>
     {#if isBuilding}
       <div class="building-status">
         <span class="building-dot"></span>

@@ -134,38 +134,37 @@ You believe that truth is best understood through metaphor, resonance, and narra
   // 2. Instruct the model on prebuilt interactive layout components (only if enabled)
   if (enableLayoutPreviews !== false) {
     systemPrompt += `\n\n[IN-CHAT INTERACTIVE PREVIEW CONTROLS]
-Write interactive UI tools, layouts, or calculators inside a \`rune-layout\` code block. Example:
+Write interactive UI layouts or calculators inside a \`rune-layout\` block. Example:
 \`\`\`rune-layout
-<div class="rune-card rune-col rune-gap-md">
-  <h3 class="rune-title">Title</h3>
-  <button class="rune-btn rune-btn-primary" onclick="rune.showToast('Hi!', 'success')">Click</button>
+<!-- title: App Title (Optional custom title) -->
+<div class="r-card r-col r-gap-md">
+  <h3 class="r-title">Controls</h3>
+  <button class="r-btn r-btn-prim" onclick="rune.showToast('Hi!', 'success')">Click</button>
 </div>
 \`\`\`
-Guidelines: Keep blocks low-token; skip custom CSS/inline styling, use prebuilt classes.
+Guidelines: Keep blocks low-token by using short classes/attributes. Customize container title label via \`<title>Title</title>\`, \`<!-- title: Title -->\`, or \`r-title="Title"\` on root.
 
-Reactivity & Global 'window.rune' Utilities:
-- \`rune-model="key"\`: Add to inputs (\`<input>\`, \`<select>\`, \`<textarea>\`) to bind value/state.
-- \`rune-text="key"\`: Add to elements (e.g. \`<span rune-text="key"></span>\`) to render state. Do NOT use custom \`<rune-text="key">\` tags.
-- \`rune-show="key"\` / \`rune-hide="key"\`: Conditional visibility based on state truthiness.
-- State: Update in script via \`rune.state.key = newValue\`.
-- Helpers:
-  * \`rune.showToast(msg, 'success'|'warning'|'danger'|'info')\`
-  * \`rune.showModal(id)\` / \`rune.closeModal(id)\` (Modal: \`<div id="id" class="rune-modal"><div class="rune-modal-content">...</div></div>\`)
-  * \`rune.showTab(event, tabId)\` (Tabs: class \`rune-tabs\` on buttons, class \`rune-tab-content active\` on content panes)
-  * \`rune.setProgress(id, percent)\` (Progress: class \`rune-progress\` with child class \`rune-progress-bar\`)
-  * \`rune.createLineChart(id, [values], [labels])\` (Line Chart: \`<div id="id"></div>\`)
-  * \`rune.createBarChart(id, [values], [labels])\` (Bar Chart: \`<div id="id"></div>\`)
-  * \`rune.createDonutChart(id, [values], [labels])\` (Donut Chart: \`<div id="id"></div>\`)
+Reactivity (using window.rune):
+- \`r-model="key"\`: Two-way binding for inputs (\`<input>\`, \`<select>\`, \`<textarea>\`).
+- \`r-text="key"\`: Output state text inside elements (e.g. \`<span r-text="key"></span>\`).
+- \`r-show="key"\` / \`r-hide="key"\`: Toggle visibility based on state truthiness.
+- Update state in scripts via \`rune.state.key = newValue\`.
 
-Prebuilt CSS Classes:
-- Layout: \`.rune-card\` (base panel), \`.rune-glass\` (glassmorphic), \`.rune-flex\`, \`.rune-row\`, \`.rune-col\`, \`.rune-grid-2\`, \`.rune-grid-3\`, \`.rune-gap-sm\`|\`md\`|\`lg\`
-- Typography: \`.rune-title\` (bold red), \`.rune-subtitle\` (bold), \`.rune-text\` (body)
-- Controls: \`.rune-input\`, \`.rune-select\`, \`.rune-slider\` (range), \`.rune-switch\` (parent of checkbox + \`.rune-switch-slider\`)
-- Buttons: \`.rune-btn\` (default), \`.rune-btn-primary\` (colored), \`.rune-btn-secondary\` (outline)
-- Banners & Badges: \`.rune-alert\` (with \`-info\`|\`-success\`|\`-warning\`|\`-danger\`), \`.rune-badge\` (pill indicators with matching state suffixes)
-- Table: \`.rune-table\` (zebra-striped table with standard headers/cells)
-- Accordion: \`<details class="rune-accordion"><summary class="rune-accordion-summary">Title</summary><div class="rune-accordion-content">Content</div></details>\`
-- Avatar: \`<img class="rune-avatar" src="..." />\``;
+Prebuilt Class Reference:
+- Layout: \`.r-card\`, \`.r-glass\`, \`.r-flex\`, \`.r-row\`, \`.r-col\`, \`.r-grid-2\`, \`.r-grid-3\`, \`.r-gap-sm\`|\`md\`|\`lg\`
+- Typography: \`.r-title\`, \`.r-subtitle\`, \`.r-text\`
+- Form Controls: \`.r-input\`, \`.r-select\`, \`.r-slider\`, \`.r-switch\` (parent of checkbox + \`.r-switch-slider\`)
+- Buttons: \`.r-btn\` (default), \`.r-btn-prim\` (primary), \`.r-btn-sec\` (outline secondary)
+- Badges & Alerts: \`.r-badge\` / \`.r-alert\` (with suffix \`-success\`/\`-ok\`, \`-warning\`/\`-warn\`, \`-danger\`/\`-err\`, \`-info\`)
+- Other: \`.r-table\` (data tables), \`.r-avatar\` (profile circles)
+- Accordion: \`<details class="r-accordion"><summary class="r-accordion-summary">Title</summary><div class="r-accordion-content">Content</div></details>\`
+
+Helper Functions:
+- \`rune.showToast(msg, 'success'|'warning'|'danger'|'info')\`
+- \`rune.showModal(id)\` / \`rune.closeModal(id)\` (Modal: \`<div id="id" class="r-modal"><div class="r-modal-content">...</div></div>\`)
+- \`rune.showTab(event, contentId)\` (Tabs: class \`r-tabs\` on container, class \`r-tab\` or raw \`<button>\` on header buttons, class \`r-tab-content active\` on content panes)
+- \`rune.setProgress(id, percent)\` (Progress: class \`r-progress\` with child \`.r-progress-bar\`)
+- Charts: \`rune.createLineChart(id, [values], [labels])\`, \`rune.createBarChart(id, [values], [labels])\`, \`rune.createDonutChart(id, [values], [labels])\` (draws into empty \`<div id="id"></div>\`)`;
   } else {
     systemPrompt += `\n\n[CRITICAL NOTE]
 Do NOT output custom \`rune-layout\` code blocks or visual layout blocks. Output standard markdown text and standard code blocks instead.`;

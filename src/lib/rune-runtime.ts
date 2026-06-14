@@ -27,7 +27,7 @@ export const prebuiltStyles = `
   * { box-sizing: border-box; }
 
   /* Containers & Layouts */
-  .rune-card {
+  .rune-card, .r-card {
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -35,31 +35,31 @@ export const prebuiltStyles = `
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     max-width: 100%;
   }
-  .rune-flex { display: flex; }
-  .rune-row { display: flex; flex-direction: row; align-items: center; }
-  .rune-col { display: flex; flex-direction: column; }
-  .rune-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .rune-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .rune-flex, .r-flex { display: flex; }
+  .rune-row, .r-row { display: flex; flex-direction: row; align-items: center; }
+  .rune-col, .r-col { display: flex; flex-direction: column; }
+  .rune-grid-2, .r-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .rune-grid-3, .r-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
   
   /* Gaps */
-  .rune-gap-sm { gap: 6px; }
-  .rune-gap-md { gap: 12px; }
-  .rune-gap-lg { gap: 20px; }
+  .rune-gap-sm, .r-gap-sm { gap: 6px; }
+  .rune-gap-md, .r-gap-md { gap: 12px; }
+  .rune-gap-lg, .r-gap-lg { gap: 20px; }
 
   /* Typography */
-  .rune-title {
+  .rune-title, .r-title {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--color-primary);
     margin: 0 0 0.5rem 0;
   }
-  .rune-subtitle {
+  .rune-subtitle, .r-subtitle {
     font-size: 1rem;
     font-weight: 600;
     color: #44403c;
     margin: 0 0 0.5rem 0;
   }
-  .rune-text {
+  .rune-text, .r-text {
     font-size: 0.875rem;
     line-height: 1.5;
     margin: 0 0 1rem 0;
@@ -67,7 +67,7 @@ export const prebuiltStyles = `
   }
 
   /* Interactive Inputs & Sliders */
-  .rune-input {
+  .rune-input, .r-input {
     width: 100%;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--color-border);
@@ -78,11 +78,11 @@ export const prebuiltStyles = `
     font-family: inherit;
     transition: border-color 0.15s ease;
   }
-  .rune-input:focus {
+  .rune-input:focus, .r-input:focus {
     border-color: var(--color-primary);
   }
   
-  .rune-select {
+  .rune-select, .r-select {
     width: 100%;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--color-border);
@@ -94,7 +94,7 @@ export const prebuiltStyles = `
     cursor: pointer;
   }
 
-  .rune-slider {
+  .rune-slider, .r-slider {
     -webkit-appearance: none;
     width: 100%;
     height: 6px;
@@ -103,7 +103,7 @@ export const prebuiltStyles = `
     outline: none;
     margin: 8px 0;
   }
-  .rune-slider::-webkit-slider-thumb {
+  .rune-slider::-webkit-slider-thumb, .r-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 16px;
@@ -114,12 +114,12 @@ export const prebuiltStyles = `
     border: none;
     transition: transform 0.1s ease;
   }
-  .rune-slider::-webkit-slider-thumb:hover {
+  .rune-slider::-webkit-slider-thumb:hover, .r-slider::-webkit-slider-thumb:hover {
     transform: scale(1.2);
   }
 
   /* Buttons */
-  .rune-btn {
+  .rune-btn, .r-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -134,40 +134,40 @@ export const prebuiltStyles = `
     transition: all 0.15s ease;
     font-family: inherit;
   }
-  .rune-btn:hover {
+  .rune-btn:hover, .r-btn:hover {
     background: var(--color-bg-hover);
   }
-  .rune-btn:active {
+  .rune-btn:active, .r-btn:active {
     transform: scale(0.97);
   }
-  .rune-btn-primary {
+  .rune-btn-primary, .r-btn-primary, .r-btn-prim {
     background: var(--color-primary);
     color: white;
     border-color: var(--color-primary);
   }
-  .rune-btn-primary:hover {
+  .rune-btn-primary:hover, .r-btn-primary:hover, .r-btn-prim:hover {
     background: #861626;
     border-color: #861626;
     color: white;
     opacity: 1;
   }
-  .rune-btn-secondary {
+  .rune-btn-secondary, .r-btn-secondary, .r-btn-sec {
     background: transparent;
     border-color: transparent;
     color: var(--color-primary);
   }
-  .rune-btn-secondary:hover {
+  .rune-btn-secondary:hover, .r-btn-secondary:hover, .r-btn-sec:hover {
     background: rgba(165, 28, 48, 0.05);
   }
 
   /* Dynamic Tabs Component */
-  .rune-tabs {
+  .rune-tabs, .r-tabs {
     display: flex;
     border-bottom: 2px solid var(--color-border-muted);
     margin-bottom: 1rem;
     gap: 4px;
   }
-  .rune-tab-btn {
+  .rune-tab-btn, .rune-tabs button, .r-tab, .r-tabs button {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
     font-weight: 600;
@@ -179,13 +179,13 @@ export const prebuiltStyles = `
     transition: color 0.15s ease;
     font-family: inherit;
   }
-  .rune-tab-btn:hover {
+  .rune-tab-btn:hover, .rune-tabs button:hover, .r-tab:hover, .r-tabs button:hover {
     color: var(--color-primary);
   }
-  .rune-tab-btn.active {
+  .rune-tab-btn.active, .rune-tabs button.active, .r-tab.active, .r-tabs button.active {
     color: var(--color-primary);
   }
-  .rune-tab-btn.active::after {
+  .rune-tab-btn.active::after, .rune-tabs button.active::after, .r-tab.active::after, .r-tabs button.active::after {
     content: "";
     position: absolute;
     bottom: -2px;
@@ -195,24 +195,24 @@ export const prebuiltStyles = `
     background: var(--color-primary);
     border-radius: 2px;
   }
-  .rune-tab-content {
+  .rune-tab-content, .r-tab-content {
     display: none;
     opacity: 0;
     transform: translateY(4px);
     transition: opacity 0.2s ease, transform 0.2s ease;
   }
-  .rune-tab-content.active {
+  .rune-tab-content.active, .r-tab-content.active {
     display: block;
     opacity: 1;
     transform: translateY(0);
   }
 
   /* Custom Dropdowns & Popups with micro-animations */
-  .rune-dropdown {
+  .rune-dropdown, .r-dropdown {
     position: relative;
     display: inline-block;
   }
-  .rune-dropdown-content {
+  .rune-dropdown-content, .r-dropdown-content {
     display: block;
     position: absolute;
     background-color: var(--color-bg);
@@ -227,7 +227,7 @@ export const prebuiltStyles = `
     transform: translateY(-8px) scale(0.95);
     transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.15s;
   }
-  .rune-dropdown-content a {
+  .rune-dropdown-content a, .r-dropdown-content a {
     color: #292524;
     padding: 8px 12px;
     text-decoration: none;
@@ -235,17 +235,17 @@ export const prebuiltStyles = `
     font-size: 0.875rem;
     transition: background-color 0.15s ease;
   }
-  .rune-dropdown-content a:hover {
+  .rune-dropdown-content a:hover, .r-dropdown-content a:hover {
     background-color: var(--color-bg-hover);
   }
-  .rune-dropdown:hover .rune-dropdown-content {
+  .rune-dropdown:hover .rune-dropdown-content, .r-dropdown:hover .r-dropdown-content {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
   }
 
   /* Collapsible Accordions using HTML details summary */
-  .rune-accordion {
+  .rune-accordion, .r-accordion {
     border: 1px solid var(--color-border-muted);
     border-radius: 6px;
     background: var(--color-bg);
@@ -253,10 +253,10 @@ export const prebuiltStyles = `
     overflow: hidden;
     transition: border-color 0.15s ease;
   }
-  .rune-accordion:hover {
+  .rune-accordion:hover, .r-accordion:hover {
     border-color: var(--color-border);
   }
-  .rune-accordion-summary {
+  .rune-accordion-summary, .r-accordion-summary {
     padding: 0.75rem 1rem;
     font-weight: 600;
     font-size: 0.875rem;
@@ -269,13 +269,13 @@ export const prebuiltStyles = `
     align-items: center;
     transition: background-color 0.15s ease;
   }
-  .rune-accordion-summary:hover {
+  .rune-accordion-summary:hover, .r-accordion-summary:hover {
     background: #e7e5e4;
   }
-  .rune-accordion-summary::-webkit-details-marker {
+  .rune-accordion-summary::-webkit-details-marker, .r-accordion-summary::-webkit-details-marker {
     display: none;
   }
-  .rune-accordion-content {
+  .rune-accordion-content, .r-accordion-content {
     padding: 1rem;
     border-top: 1px solid var(--color-border-muted);
     font-size: 0.875rem;
@@ -288,7 +288,7 @@ export const prebuiltStyles = `
   }
 
   /* Status Badges */
-  .rune-badge {
+  .rune-badge, .r-badge {
     display: inline-flex;
     align-items: center;
     padding: 0.25rem 0.5rem;
@@ -300,48 +300,48 @@ export const prebuiltStyles = `
     border: 1px solid var(--color-border-muted);
     line-height: 1;
   }
-  .rune-badge-success {
+  .rune-badge-success, .r-badge-success, .r-badge-ok {
     background-color: #d1fae5;
     color: #065f46;
     border-color: #a7f3d0;
   }
-  .rune-badge-warning {
+  .rune-badge-warning, .r-badge-warning, .r-badge-warn {
     background-color: #fef3c7;
     color: #92400e;
     border-color: #fde68a;
   }
-  .rune-badge-danger {
+  .rune-badge-danger, .r-badge-danger, .r-badge-err {
     background-color: #fee2e2;
     color: #991b1b;
     border-color: #fca5a5;
   }
 
   /* Data Tables */
-  .rune-table {
+  .rune-table, .r-table {
     width: 100%;
     border-collapse: collapse;
     margin: 12px 0;
     font-size: 0.875rem;
     text-align: left;
   }
-  .rune-table th {
+  .rune-table th, .r-table th {
     background-color: var(--color-bg-hover);
     color: #292524;
     font-weight: 600;
     padding: 10px 12px;
     border-bottom: 2px solid var(--color-border);
   }
-  .rune-table td {
+  .rune-table td, .r-table td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--color-border-muted);
     color: #57534e;
   }
-  .rune-table tr:hover {
+  .rune-table tr:hover, .r-table tr:hover {
     background-color: rgba(245, 245, 244, 0.5);
   }
 
   /* Progress Bars */
-  .rune-progress {
+  .rune-progress, .r-progress {
     width: 100%;
     height: 8px;
     background-color: var(--color-border-muted);
@@ -349,7 +349,7 @@ export const prebuiltStyles = `
     overflow: hidden;
     margin: 10px 0;
   }
-  .rune-progress-bar {
+  .rune-progress-bar, .r-progress-bar {
     height: 100%;
     background-color: var(--color-primary);
     border-radius: 4px;
@@ -358,19 +358,19 @@ export const prebuiltStyles = `
   }
 
   /* Toggle Switches */
-  .rune-switch {
+  .rune-switch, .r-switch {
     position: relative;
     display: inline-flex;
     width: 38px;
     height: 20px;
     flex-shrink: 0;
   }
-  .rune-switch input {
+  .rune-switch input, .r-switch input {
     opacity: 0;
     width: 0;
     height: 0;
   }
-  .rune-switch-slider {
+  .rune-switch-slider, .r-switch-slider {
     position: absolute;
     cursor: pointer;
     inset: 0;
@@ -378,7 +378,7 @@ export const prebuiltStyles = `
     transition: 0.2s ease;
     border-radius: 20px;
   }
-  .rune-switch-slider:before {
+  .rune-switch-slider:before, .r-switch-slider:before {
     position: absolute;
     content: "";
     height: 14px;
@@ -389,15 +389,15 @@ export const prebuiltStyles = `
     transition: 0.2s ease;
     border-radius: 50%;
   }
-  .rune-switch input:checked + .rune-switch-slider {
+  .rune-switch input:checked + .rune-switch-slider, .r-switch input:checked + .r-switch-slider {
     background-color: var(--color-primary);
   }
-  .rune-switch input:checked + .rune-switch-slider:before {
+  .rune-switch input:checked + .rune-switch-slider:before, .r-switch input:checked + .r-switch-slider:before {
     transform: translateX(18px);
   }
 
   /* Alert Blocks */
-  .rune-alert {
+  .rune-alert, .r-alert {
     padding: 0.75rem 1rem;
     border-radius: 6px;
     border-left: 4px solid #78716c;
@@ -406,29 +406,29 @@ export const prebuiltStyles = `
     margin: 12px 0;
     color: #57534e;
   }
-  .rune-alert-success {
+  .rune-alert-success, .r-alert-success, .r-alert-ok {
     border-left-color: #10b981;
     background-color: #ecfdf5;
     color: #065f46;
   }
-  .rune-alert-warning {
+  .rune-alert-warning, .r-alert-warning, .r-alert-warn {
     border-left-color: #f59e0b;
     background-color: #fffbeb;
     color: #92400e;
   }
-  .rune-alert-danger {
+  .rune-alert-danger, .r-alert-danger, .r-alert-err {
     border-left-color: #ef4444;
     background-color: #fef2f2;
     color: #991b1b;
   }
-  .rune-alert-info {
+  .rune-alert-info, .r-alert-info {
     border-left-color: #3b82f6;
     background-color: #eff6ff;
     color: #1e3a8a;
   }
 
   /* Glassmorphism Panel */
-  .rune-glass {
+  .rune-glass, .r-glass {
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -437,7 +437,7 @@ export const prebuiltStyles = `
   }
 
   /* Avatars */
-  .rune-avatar {
+  .rune-avatar, .r-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -446,7 +446,7 @@ export const prebuiltStyles = `
   }
 
   /* Modal / Dialog Primitives */
-  .rune-modal {
+  .rune-modal, .r-modal {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.4);
@@ -459,11 +459,11 @@ export const prebuiltStyles = `
     visibility: hidden;
     transition: opacity 0.2s ease, visibility 0.2s;
   }
-  .rune-modal.active {
+  .rune-modal.active, .r-modal.active {
     opacity: 1;
     visibility: visible;
   }
-  .rune-modal-content {
+  .rune-modal-content, .r-modal-content {
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -474,7 +474,7 @@ export const prebuiltStyles = `
     transform: scale(0.95);
     transition: transform 0.2s ease;
   }
-  .rune-modal.active .rune-modal-content {
+  .rune-modal.active .rune-modal-content, .r-modal.active .r-modal-content {
     transform: scale(1);
   }
 
@@ -503,12 +503,12 @@ export const runeScript = `
         target[key] = value;
         
         // Bind text elements (attribute-based)
-        document.querySelectorAll('[rune-text="' + key + '"]').forEach(function(el) {
+        document.querySelectorAll('[rune-text="' + key + '"], [r-text="' + key + '"]').forEach(function(el) {
           el.textContent = value;
         });
         
         // Bind text elements (custom tag name fallback)
-        document.querySelectorAll('rune-text').forEach(function(el) {
+        document.querySelectorAll('rune-text, r-text').forEach(function(el) {
           for (let i = 0; i < el.attributes.length; i++) {
             const attr = el.attributes[i];
             const cleanName = attr.name.replace(/['"=]/g, '');
@@ -519,7 +519,7 @@ export const runeScript = `
         });
         
         // Bind input fields & checkboxes
-        document.querySelectorAll('[rune-model="' + key + '"]').forEach(function(el) {
+        document.querySelectorAll('[rune-model="' + key + '"], [r-model="' + key + '"]').forEach(function(el) {
           if (el.type === 'checkbox') {
             if (el.checked !== !!value) el.checked = !!value;
           } else {
@@ -528,10 +528,10 @@ export const runeScript = `
         });
         
         // Bind conditional visibility
-        document.querySelectorAll('[rune-show="' + key + '"]').forEach(function(el) {
+        document.querySelectorAll('[rune-show="' + key + '"], [r-show="' + key + '"]').forEach(function(el) {
           el.style.display = value ? '' : 'none';
         });
-        document.querySelectorAll('[rune-hide="' + key + '"]').forEach(function(el) {
+        document.querySelectorAll('[rune-hide="' + key + '"], [r-hide="' + key + '"]').forEach(function(el) {
           el.style.display = value ? 'none' : '';
         });
         return true;
@@ -539,8 +539,8 @@ export const runeScript = `
     }),
 
     init: function() {
-      document.querySelectorAll('[rune-model]').forEach(function(el) {
-        const key = el.getAttribute('rune-model');
+      document.querySelectorAll('[rune-model], [r-model]').forEach(function(el) {
+        const key = el.getAttribute('rune-model') || el.getAttribute('r-model');
         const isCheckbox = el.type === 'checkbox';
         
         el.addEventListener('input', function(e) {
@@ -557,15 +557,15 @@ export const runeScript = `
         }
       });
       
-      document.querySelectorAll('[rune-text]').forEach(function(el) {
-        const key = el.getAttribute('rune-text');
+      document.querySelectorAll('[rune-text], [r-text]').forEach(function(el) {
+        const key = el.getAttribute('rune-text') || el.getAttribute('r-text');
         if (window.runeState[key] !== undefined) {
           el.textContent = window.runeState[key];
         }
       });
 
       // Initialize tag-based rune-text elements
-      document.querySelectorAll('rune-text').forEach(function(el) {
+      document.querySelectorAll('rune-text, r-text').forEach(function(el) {
         for (let i = 0; i < el.attributes.length; i++) {
           const attr = el.attributes[i];
           const cleanName = attr.name.replace(/['"=]/g, '');
@@ -575,21 +575,68 @@ export const runeScript = `
         }
       });
 
-      document.querySelectorAll('[rune-show]').forEach(function(el) {
-        const key = el.getAttribute('rune-show');
+      document.querySelectorAll('[rune-show], [r-show]').forEach(function(el) {
+        const key = el.getAttribute('rune-show') || el.getAttribute('r-show');
         el.style.display = window.runeState[key] ? '' : 'none';
       });
-      document.querySelectorAll('[rune-hide]').forEach(function(el) {
-        const key = el.getAttribute('rune-hide');
+      document.querySelectorAll('[rune-hide], [r-hide]').forEach(function(el) {
+        const key = el.getAttribute('rune-hide') || el.getAttribute('r-hide');
         el.style.display = window.runeState[key] ? 'none' : '';
       });
+      
+      this.initResizeObserver();
+    },
+
+    lastHeight: 0,
+    reportHeight: function() {
+      const wrapper = document.getElementById("rune-wrapper");
+      if (wrapper) {
+        const bodyStyle = window.getComputedStyle(document.body);
+        const paddingTop = parseFloat(bodyStyle.paddingTop) || 0;
+        const paddingBottom = parseFloat(bodyStyle.paddingBottom) || 0;
+        const height = Math.ceil(wrapper.getBoundingClientRect().height + paddingTop + paddingBottom);
+        if (Math.abs(height - this.lastHeight) > 1) {
+          this.lastHeight = height;
+          window.parent.postMessage({
+            type: "rune-resize",
+            height: height
+          }, "*");
+        }
+      }
+    },
+
+    initResizeObserver: function() {
+      const self = this;
+      self.reportHeight();
+      window.addEventListener("load", function() { self.reportHeight(); });
+      if (window.ResizeObserver) {
+        const wrapper = document.getElementById("rune-wrapper");
+        if (wrapper) {
+          const ro = new ResizeObserver(function() { self.reportHeight(); });
+          ro.observe(wrapper);
+        }
+      }
     },
 
     showTab: function(e, id) {
-      document.querySelectorAll('.rune-tab-content').forEach(function(el) {
-        el.classList.remove('active');
-      });
-      document.querySelectorAll('.rune-tab-btn').forEach(function(el) {
+      if (e && e.currentTarget) {
+        const parent = e.currentTarget.closest('.rune-tabs, .r-tabs');
+        if (parent) {
+          parent.querySelectorAll('button, .rune-tab-btn, .r-tab').forEach(function(el) {
+            el.classList.remove('active');
+          });
+        } else {
+          document.querySelectorAll('.rune-tab-btn, .rune-tabs button, .r-tab, .r-tabs button').forEach(function(el) {
+            el.classList.remove('active');
+          });
+        }
+      } else {
+        document.querySelectorAll('.rune-tab-btn, .rune-tabs button, .r-tab, .r-tabs button').forEach(function(el) {
+          el.classList.remove('active');
+        });
+      }
+      
+      document.querySelectorAll('.rune-tab-content, .r-tab-content').forEach(function(el) {
         el.classList.remove('active');
       });
       const tab = document.getElementById(id);
