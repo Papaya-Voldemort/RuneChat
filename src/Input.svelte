@@ -21,14 +21,13 @@
     enableLayoutPreviews,
   } from "./lib/stores/settings";
 
-  import { sendMessageIcon } from "./lib/assets";
+  import { sendMessageIcon, addIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
   import { get } from "svelte/store";
   import { tick } from "svelte";
-
-  const API_URL = "/api/chat";
-  const OPEN_THINKING_TAG = "<thinking>";
-  const CLOSE_THINKING_TAG = "</thinking>";
+  import { streamChatRequest } from "./lib/functions/chat-stream";
+  import { compactArtifactMarker, convertLegacyLayout } from "./lib/rune-layout/artifacts";
+  import type { RuneLayoutArtifact, RuneLayoutCatalog } from "./lib/rune-layout/types";
 
   let textareaRef: HTMLTextAreaElement;
   let message = "";
@@ -117,7 +116,7 @@
     ]);
 
     try {
-      const currentMessages = get_messages();
+      const { providerMessages, artifacts } = getRequestContext(assistantId);
 
       const modelVal = get(selectedModel);
       const activeModel = modelVal === "custom" ? get(customModelId) : modelVal;
@@ -126,179 +125,83 @@
       const activePrompt = get(customSystemPrompt);
       const activeMaxTokens = get(maxTokens);
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: currentMessages,
-          apiKey: currentApiKey,
-          model: activeModel,
-          persona: activePersona,
-          customPrompt: activePrompt,
-          maxTokens: activeMaxTokens ? Number(activeMaxTokens) : undefined,
-          userProfileName: get(userProfileName),
-          userProfileAbout: get(userProfileAbout),
-          enableLayoutPreviews: get(enableLayoutPreviews),
-        }),
+      await streamChatRequest({
+        messages: providerMessages,
+        artifacts,
+        apiKey: currentApiKey,
+        model: activeModel,
+        persona: activePersona,
+        customPrompt: activePrompt,
+        maxTokens: activeMaxTokens ? Number(activeMaxTokens) : undefined,
+        userProfileName: get(userProfileName),
+        userProfileAbout: get(userProfileAbout),
+        enableLayoutPreviews: get(enableLayoutPreviews),
+      }, (parts) => {
+        updateAssistantParts(assistantId, parts);
       });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || `Request failed with ${res.status}`);
-      }
-
-      if (!res.body) {
-        throw new Error("Empty response body from server");
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        fullContent += chunk;
-
-        const { thinking, parts } = parseContent(fullContent);
-        updateAssistantParts(assistantId, thinking, parts);
-      }
-
-      const flushChunk = decoder.decode();
-      if (flushChunk) {
-        fullContent += flushChunk;
-      }
-
-      if (!fullContent.trim()) {
-        throw new Error("Model returned an empty response");
-      }
-
-      const { thinking, parts } = parseContent(fullContent);
-      updateAssistantParts(assistantId, thinking, parts);
     } catch (error) {
       console.error("Chat error:", error);
       const errorText =
         error instanceof Error ? error.message : "Unknown chat error";
-      updateAssistantParts(
-        assistantId,
-        "",
-        `Sorry, I couldn't get a response. ${errorText}`,
-      );
+      updateAssistantParts(assistantId, [{
+        type: "text",
+        text: `Sorry, I couldn't get a response. ${errorText}`,
+      }]);
     } finally {
       loading = false;
       isStreaming.set(false);
     }
   }
 
-  function parseContent(content: string): { thinking: string; parts: MessagePart[] } {
-    const thinkingParts: string[] = [];
-    const bodyTextParts: string[] = [];
-    let cursor = 0;
-
-    // 1. Separate thinking process block from the main body content
-    while (cursor < content.length) {
-      const openIndex = content.indexOf(OPEN_THINKING_TAG, cursor);
-
-      if (openIndex === -1) {
-        bodyTextParts.push(content.slice(cursor));
-        break;
-      }
-
-      bodyTextParts.push(content.slice(cursor, openIndex));
-      const thinkingStart = openIndex + OPEN_THINKING_TAG.length;
-      const closeIndex = content.indexOf(CLOSE_THINKING_TAG, thinkingStart);
-
-      if (closeIndex === -1) {
-        thinkingParts.push(content.slice(thinkingStart));
-        break;
-      }
-
-      thinkingParts.push(content.slice(thinkingStart, closeIndex));
-      cursor = closeIndex + CLOSE_THINKING_TAG.length;
-    }
-
-    const thinkingStr = thinkingParts.join("");
-    const bodyStr = bodyTextParts.join("");
-
-    // 2. Parse the body text for ```rune-layout code blocks
-    const parts: MessagePart[] = [];
-    const layoutRegex = /```rune-layout\n([\s\S]*?)(?:```|$)/g;
-    let lastIndex = 0;
-    let match;
-
-    while ((match = layoutRegex.exec(bodyStr)) !== null) {
-      // Add text before the layout block
-      if (match.index > lastIndex) {
-        parts.push({ type: "text", text: bodyStr.slice(lastIndex, match.index) });
-      }
-      // Add the layout code itself
-      parts.push({ type: "layout", text: match[1] ?? "" });
-      lastIndex = layoutRegex.lastIndex;
-    }
-
-    // Add remaining body text after layout blocks
-    if (lastIndex < bodyStr.length) {
-      parts.push({ type: "text", text: bodyStr.slice(lastIndex) });
-    }
-
-    return {
-      thinking: thinkingStr,
-      parts,
-    };
-  }
-
-  function updateAssistantParts(
-    id: string,
-    thinking: string,
-    textOrParts: string | MessagePart[],
-  ) {
+  function updateAssistantParts(id: string, nextParts: MessagePart[]) {
     messages.update((msgs) => {
       const updated = [...msgs];
       const assistantMsg = updated.find((m) => m.id === id);
 
       if (!assistantMsg) return updated;
-
-      assistantMsg.parts = [];
-
-      if (thinking) {
-        assistantMsg.parts.push({ type: "reasoning", text: thinking });
-      }
-
-      if (typeof textOrParts === "string") {
-        if (textOrParts) {
-          assistantMsg.parts.push({ type: "text", text: textOrParts });
-        }
-      } else if (Array.isArray(textOrParts)) {
-        assistantMsg.parts.push(...textOrParts);
-      }
-
+      assistantMsg.parts = nextParts;
       return updated;
     });
   }
 
-  function get_messages() {
+  function getRequestContext(assistantId: string): {
+    providerMessages: Array<{ role: string; content: string }>;
+    artifacts: RuneLayoutCatalog;
+  } {
     const msgs = get(messages);
-    return msgs.flatMap((msg: Message) => {
+    const artifacts: RuneLayoutCatalog = {};
+    const providerMessages = msgs.flatMap((msg: Message) => {
       const parts = msg.parts || [];
-      const textContent =
-        parts
-          .filter((part) => part.type === "text")
-          .map((part) => part.text)
-          .join("") ||
-        msg.content ||
-        "";
+      const content: string[] = [];
 
-      if (!textContent) return [];
+      for (const part of parts) {
+        if (part.type === "text") content.push(part.text);
+        if (part.type !== "layout") continue;
+        let artifact: RuneLayoutArtifact | undefined;
+        if ("status" in part && part.status === "ready") artifact = part.artifact;
+        if ("text" in part && typeof part.text === "string") {
+          try {
+            artifact = convertLegacyLayout(part.text, `legacy-${msg.id}-${Object.keys(artifacts).length}`);
+          } catch {
+            artifact = undefined;
+          }
+        }
+        if (artifact) {
+          if (!(artifact.id in artifacts) && Object.keys(artifacts).length >= 20) {
+            const oldestId = Object.keys(artifacts)[0];
+            if (oldestId) delete artifacts[oldestId];
+          }
+          artifacts[artifact.id] = artifact;
+          content.push(compactArtifactMarker(artifact));
+        }
+      }
 
-      return [
-        {
-          role: msg.role,
-          content: textContent,
-        },
-      ];
+      const textContent = content.join("") || msg.content || "";
+      if (!textContent || msg.id === assistantId) return [];
+
+      return [{ role: msg.role, content: textContent }];
     });
+    return { providerMessages, artifacts };
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -312,21 +215,24 @@
 </script>
 
 <div class="chat-input">
-  <textarea
-    bind:this={textareaRef}
-    name="input"
-    id="input"
-    placeholder="Type a message..."
-    bind:value={message}
-    on:input={autoResize}
-    on:keydown={handleKeydown}
-    disabled={loading}
-    rows="1"
-  ></textarea>
-
-  <button class="send-btn" on:click={send} disabled={loading}>
-    <img src={sendMessageIcon} alt="Send Message" />
+  <button class="add-btn" disabled={loading}>
+      <img src={addIcon} alt="Add tools or upload media" />
   </button>
+    <textarea
+      bind:this={textareaRef}
+      name="input"
+      id="input"
+      placeholder="Type a message..."
+      bind:value={message}
+      on:input={autoResize}
+      on:keydown={handleKeydown}
+      disabled={loading}
+      rows="1"
+    ></textarea>
+
+    <button class="send-btn" on:click={send} disabled={loading}>
+      <img src={sendMessageIcon} alt="Send Message" />
+    </button>
 </div>
 
 <style>
@@ -398,4 +304,43 @@
     width: 18px;
     height: 18px;
   }
+
+    .add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+
+    border-radius: var(--radius-sm);
+    border: var(--border-thin) solid var(--color-border-muted);
+
+    background: var(--color-bg);
+    color: var(--color-border-muted);
+    cursor: pointer;
+
+    transition: all 0.15s ease;
+  }
+
+  .add-btn:hover {
+    background: var(--color-bg-hover);
+    color: #222;
+  }
+
+  .add-btn:active {
+    transform: scale(0.95);
+  }
+
+  .add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .add-icon {
+    width: 16px;
+    height: 16px;
+  }
+
 </style>

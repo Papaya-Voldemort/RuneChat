@@ -2,8 +2,7 @@ export type ChatRole = "user" | "assistant" | (string & {});
 
 export interface ChatMessagePart {
   type: string;
-  text: string;
-  [key: string]: unknown;
+  text?: string;
 }
 
 export interface ChatMessage {

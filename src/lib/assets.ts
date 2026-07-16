@@ -1,16 +1,17 @@
-import closeIcon from "../images/Close.svg";
-import copyIcon from "../images/Copy.svg";
-import infoIcon from "../images/Info.svg";
-import logoIcon from "../images/Logo.svg";
-import newChatIcon from "../images/NewChat.svg";
-import searchIcon from "../images/Search.svg";
-import sendMessageIcon from "../images/SendMessage.svg";
-import settingsIcon from "../images/Settings.svg";
-import sideBarToggleIcon from "../images/SideBarToggle.svg";
-import lightningIcon from "../images/Lightning.svg";
-import flexboxIcon from "../images/Flexbox.svg";
-import serverIcon from "../images/Server.svg";
-import colorsIcon from "../images/Colors.svg";
+import closeIcon from "../icons/Close.svg";
+import copyIcon from "../icons/Copy.svg";
+import infoIcon from "../icons/Info.svg";
+import logoIcon from "../icons/Logo.svg";
+import newChatIcon from "../icons/NewChat.svg";
+import searchIcon from "../icons/Search.svg";
+import sendMessageIcon from "../icons/SendMessage.svg";
+import settingsIcon from "../icons/Settings.svg";
+import sideBarToggleIcon from "../icons/SideBarToggle.svg";
+import lightningIcon from "../icons/Lightning.svg";
+import flexboxIcon from "../icons/Flexbox.svg";
+import serverIcon from "../icons/Server.svg";
+import colorsIcon from "../icons/Colors.svg";
+import addIcon from "../icons/Add.svg";
 
 export {
   closeIcon,
@@ -26,4 +27,5 @@ export {
   flexboxIcon,
   serverIcon,
   colorsIcon,
+  addIcon
 };

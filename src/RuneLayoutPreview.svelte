@@ -1,355 +1,165 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { fade } from "svelte/transition";
-  import { prebuiltStyles, runeScript } from "./lib/rune-runtime";
+  import type { RuneLayoutArtifact, RuneLayoutStatus } from "./lib/rune-layout/types";
+  import { compileRuneLayoutSrcdoc } from "./lib/rune-layout/runtime";
 
-  export let code = "";
-  export let isBuilding = false;
+  export let artifact: RuneLayoutArtifact | undefined = undefined;
+  export let status: RuneLayoutStatus = "building";
+  export let progress = 0;
+  export let error = "";
+  export let retryKey = 0;
 
-  let iframeElement: HTMLIFrameElement;
-  let iframeHeight = 280;
+  let iframeElement: HTMLIFrameElement | undefined;
+  let iframeHeight = 96;
+  let srcdoc = "";
+  let channel = "";
+  let lastCompileKey = "";
+  let localRetry = 0;
+  let readyReceived = false;
+  let measured = false;
+  let runtimeError = "";
+  let internallyScrollable = false;
 
-  let layoutTitle = "Rune Visual Layout";
-  $: {
-    const commentMatch = code ? code.match(/<!--\s*(?:rune-)?title:\s*([^\n-->]+?)\s*-->/i) : null;
-    if (commentMatch) {
-      layoutTitle = commentMatch[1].trim();
-    } else {
-      const attrMatch = code ? code.match(/(?:rune-|r-)?title=["']([^"']+)["']/i) : null;
-      if (attrMatch) {
-        layoutTitle = attrMatch[1].trim();
-      } else {
-        const tagMatch = code ? code.match(/<title>([\s\S]*?)<\/title>/i) : null;
-        layoutTitle = tagMatch ? tagMatch[1].trim() : "Rune Visual Layout";
-      }
-    }
+  $: title = artifact?.title || "Rune Visual Layout";
+  $: compileKey = artifact && status === "ready"
+    ? `${artifact.id}:${artifact.version}:${retryKey}:${localRetry}`
+    : "";
+  $: if (compileKey && compileKey !== lastCompileKey && artifact) {
+    lastCompileKey = compileKey;
+    channel = crypto.randomUUID();
+    readyReceived = false;
+    measured = false;
+    runtimeError = "";
+    iframeHeight = 96;
+    internallyScrollable = false;
+    srcdoc = compileRuneLayoutSrcdoc(artifact, channel);
   }
+  $: revealed = status === "ready" && readyReceived && measured && !runtimeError;
+  $: phase = progress < 0.35 ? "Structuring" : progress < 0.72 ? "Styling" : "Wiring interactions";
 
   function handleMessage(event: MessageEvent) {
-    if (event.data && event.data.type === "rune-resize") {
-      if (iframeElement && event.source === iframeElement.contentWindow) {
-        iframeHeight = Math.max(150, event.data.height);
-      }
+    if (!iframeElement || event.source !== iframeElement.contentWindow) return;
+    const data = event.data;
+    if (!data || typeof data !== "object" || data.channel !== channel) return;
+
+    if (data.type === "rune-ready") {
+      readyReceived = true;
+      return;
+    }
+    if (data.type === "rune-error") {
+      runtimeError = typeof data.message === "string" ? data.message.slice(0, 500) : "The layout encountered a runtime error.";
+      return;
+    }
+    if (data.type === "rune-resize") {
+      const reported = Number(data.height);
+      if (!Number.isFinite(reported)) return;
+      internallyScrollable = reported > 1200;
+      iframeHeight = Math.max(96, Math.min(1200, Math.ceil(reported)));
+      measured = true;
     }
   }
 
-  function compileIframeSrcdoc(htmlContent: string, scriptContents: string[]): string {
-    const userScripts = scriptContents.map(s => {
-      return `<script>${s}<\/script>`;
-    }).join("\n");
-
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <link rel="preconnect" href="https://fonts.googleapis.com">
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-          <style>${prebuiltStyles}</style>
-          <script>
-            ${runeScript}
-          <\/script>
-        </head>
-        <body>
-          <div id="rune-wrapper">${htmlContent}</div>
-          
-          <script>
-            // Initialize rune bindings immediately after DOM elements are parsed
-            window.rune.init();
-          <\/script>
-
-          ${userScripts}
-        </body>
-      </html>
-    `;
-  }
-
-  let updateTimeout: ReturnType<typeof setTimeout> | null = null;
-  let lastUpdateTime = 0;
-
-  function updateIframe() {
-    if (!iframeElement) return;
-
-    // Extract script blocks safely
-    const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
-    const scripts: string[] = [];
-    const cleanHtml = code.replace(scriptRegex, (m, content) => {
-      scripts.push(content);
-      return "";
-    });
-
-    const docHtml = compileIframeSrcdoc(cleanHtml, scripts);
-    iframeElement.srcdoc = docHtml;
-  }
-
-  function throttleUpdate() {
-    if (!iframeElement) return;
-    const now = Date.now();
-    const timeSinceLast = now - lastUpdateTime;
-    const throttleDelay = 90;
-
-    if (updateTimeout) {
-      clearTimeout(updateTimeout);
-      updateTimeout = null;
-    }
-
-    if (timeSinceLast >= throttleDelay) {
-      updateIframe();
-      lastUpdateTime = now;
-    } else {
-      updateTimeout = setTimeout(() => {
-        updateIframe();
-        lastUpdateTime = Date.now();
-      }, throttleDelay - timeSinceLast);
-    }
-  }
-
-  $: if (iframeElement && (code !== undefined || !isBuilding)) {
-    if (!isBuilding) {
-      if (updateTimeout) clearTimeout(updateTimeout);
-      updateIframe();
-      lastUpdateTime = Date.now();
-    } else {
-      throttleUpdate();
-    }
+  function reload() {
+    localRetry += 1;
   }
 
   onMount(() => {
     window.addEventListener("message", handleMessage);
-    updateIframe();
-    return () => {
-      window.removeEventListener("message", handleMessage);
-      if (updateTimeout) clearTimeout(updateTimeout);
-    };
+    return () => window.removeEventListener("message", handleMessage);
   });
 </script>
 
-<div class="preview-container" class:building={isBuilding}>
-  <div class="preview-header">
-    <span class="preview-tag">{layoutTitle}</span>
-    {#if isBuilding}
-      <div class="building-status">
-        <span class="building-dot"></span>
-        <span class="building-text">Building layout...</span>
+<section class="preview-container" class:building={status === "building"} aria-label={title}>
+  <header class="preview-header">
+    <div class="title-group">
+      <span class="rune-mark" aria-hidden="true">R</span>
+      <span class="preview-title">{title}</span>
+    </div>
+    <div class="header-actions">
+      <span class:ready={revealed} class:error={status === "error" || !!runtimeError} class="status-badge" aria-live="polite">
+        {status === "building" ? phase : status === "error" || runtimeError ? "Needs attention" : revealed ? "Interactive" : "Preparing"}
+      </span>
+      {#if status === "ready"}
+        <button class="reload-button" on:click={reload} aria-label="Reload layout" title="Reload layout">↻</button>
+      {/if}
+    </div>
+  </header>
+
+  {#if status === "building"}
+    <div class="build-shell" role="status" aria-live="polite">
+      <div class="skeleton-grid" aria-hidden="true">
+        <span class="skeleton hero"></span>
+        <span class="skeleton card"></span>
+        <span class="skeleton card short"></span>
+        <span class="skeleton chart"></span>
       </div>
-    {/if}
-    <div class="header-loader" class:active={isBuilding}></div>
-  </div>
-  
-  <div class="frame-wrapper">
-    <iframe
-      bind:this={iframeElement}
-      title="rune-layout-preview"
-      sandbox="allow-scripts"
-      class="preview-frame"
-      class:building={isBuilding}
-      style="height: {iframeHeight}px; overflow: hidden;"
-      scrolling="no"
-    ></iframe>
-    
-    {#if isBuilding}
-      <div class="building-overlay" transition:fade={{ duration: 250 }}>
-        <div class="shimmer-effect"></div>
-        <div class="building-card">
-          <div class="loader-spinner">
-            <svg class="spinner-svg" viewBox="0 0 24 24">
-              <circle class="spinner-path" cx="12" cy="12" r="10" fill="none" stroke-width="3"></circle>
-            </svg>
-          </div>
-          <span class="overlay-text">Constructing interface...</span>
-        </div>
+      <div class="progress-copy">
+        <span>{phase}</span><span>{Math.round(Math.max(.06, progress) * 100)}%</span>
       </div>
-    {/if}
-  </div>
-</div>
+      <div class="progress-rail" aria-hidden="true"><span style={`width: ${Math.max(6, progress * 100)}%`}></span></div>
+    </div>
+  {:else if status === "error" || runtimeError}
+    <div class="error-panel" role="alert">
+      <div>
+        <strong>Layout unavailable</strong>
+        <p>{runtimeError || error || "The layout could not be completed."}</p>
+      </div>
+      {#if artifact}
+        <button class="retry-button" on:click={reload}>Try again</button>
+      {/if}
+    </div>
+  {:else if artifact}
+    <div class="frame-wrapper" class:revealed>
+      <iframe
+        bind:this={iframeElement}
+        title={artifact.title}
+        sandbox="allow-scripts"
+        class="preview-frame"
+        class:scrollable={internallyScrollable}
+        style={`height: ${iframeHeight}px`}
+        scrolling={internallyScrollable ? "yes" : "no"}
+        {srcdoc}
+      ></iframe>
+      {#if !revealed}
+        <div class="preparing" role="status">Preparing interactive preview…</div>
+      {/if}
+    </div>
+  {/if}
+</section>
 
 <style>
-  .preview-container {
-    width: 100%;
-    max-width: 85%;
-    border: 1px solid var(--color-border-muted);
-    border-radius: 8px;
-    background: #fafaf9;
-    overflow: hidden;
-    margin: 0.75rem 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .preview-container.building {
-    border-color: rgba(165, 28, 48, 0.4);
-    box-shadow: 0 0 12px rgba(165, 28, 48, 0.08);
-  }
-
-  .preview-header {
-    background: #f5f5f4;
-    padding: 6px 12px;
-    border-bottom: 1px solid var(--color-border-muted);
-    display: flex;
-    align-items: center;
-    position: relative;
-  }
-
-  .preview-tag {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #78716c;
-    letter-spacing: 0.5px;
-  }
-
-  .building-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-left: auto;
-  }
-
-  .building-dot {
-    width: 6px;
-    height: 6px;
-    background-color: var(--color-primary);
-    border-radius: 50%;
-    animation: status-pulse 1.2s infinite ease-in-out;
-  }
-
-  .building-text {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .header-loader {
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
-    background-size: 200% 100%;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .header-loader.active {
-    opacity: 1;
-    animation: slide-loader 1.5s infinite linear;
-  }
-
-  .frame-wrapper {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .preview-frame {
-    width: 100%;
-    border: none;
-    background: transparent;
-    display: block;
-    transition: height 0.15s ease-out, filter 0.3s ease, opacity 0.3s ease;
-    overflow: hidden;
-  }
-
-  .preview-frame.building {
-    filter: blur(1.5px);
-    opacity: 0.75;
-  }
-
-  .building-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    z-index: 10;
-    background: rgba(250, 250, 249, 0.4);
-  }
-
-  .building-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid var(--color-border);
-    padding: 8px 14px;
-    border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    animation: overlay-bounce 2s infinite ease-in-out;
-  }
-
-  .overlay-text {
-    font-size: 11px;
-    font-weight: 600;
-    color: #44403c;
-  }
-
-  .loader-spinner {
-    width: 14px;
-    height: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .spinner-svg {
-    animation: rotate-spinner 2s linear infinite;
-    width: 100%;
-    height: 100%;
-  }
-
-  .spinner-path {
-    stroke: var(--color-primary);
-    stroke-linecap: round;
-    animation: dash-spinner 1.5s ease-in-out infinite;
-  }
-
-  .shimmer-effect {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.4) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer-swipe 1.8s infinite linear;
-  }
-
-  @keyframes slide-loader {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  @keyframes status-pulse {
-    0%, 100% { transform: scale(0.8); opacity: 0.5; }
-    50% { transform: scale(1.2); opacity: 1; }
-  }
-
-  @keyframes rotate-spinner {
-    100% { transform: rotate(360deg); }
-  }
-
-  @keyframes dash-spinner {
-    0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
-    50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
-    100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
-  }
-
-  @keyframes overlay-bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-  }
-
-  @keyframes shimmer-swipe {
-    0% { background-position: -150% 0; }
-    100% { background-position: 150% 0; }
-  }
+  .preview-container { width: 100%; min-width: 0; overflow: hidden; border: 1px solid var(--color-border-muted); border-radius: 10px; background: #fafaf9; box-shadow: 0 4px 16px rgb(28 25 23 / .06); }
+  .preview-container.building { border-color: rgb(185 28 60 / .35); }
+  .preview-header { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .45rem .65rem; border-bottom: 1px solid var(--color-border-muted); background: #f5f5f4; }
+  .title-group,.header-actions { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+  .rune-mark { width: 22px; height: 22px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 6px; background: var(--color-primary); color: white; font-size: .7rem; font-weight: 800; }
+  .preview-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #292524; font-size: .78rem; font-weight: 700; }
+  .status-badge { border-radius: 999px; padding: .2rem .5rem; background: #fff1f2; color: #9f1239; font-size: .65rem; font-weight: 750; white-space: nowrap; }
+  .status-badge.ready { background: #dcfce7; color: #166534; }
+  .status-badge.error { background: #fee2e2; color: #991b1b; }
+  .reload-button { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid #d6d3d1; border-radius: 6px; background: white; color: #57534e; cursor: pointer; font-size: 1rem; }
+  .reload-button:focus-visible,.retry-button:focus-visible { outline: 3px solid rgb(185 28 60 / .3); outline-offset: 2px; }
+  .build-shell { min-height: 250px; display: flex; flex-direction: column; gap: .75rem; padding: clamp(.8rem, 3vw, 1.25rem); }
+  .skeleton-grid { flex: 1; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .65rem; }
+  .skeleton { position: relative; overflow: hidden; min-height: 54px; border-radius: 8px; background: #e7e5e4; }
+  .skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg,transparent,rgb(255 255 255 / .65),transparent); animation: shimmer 1.5s infinite; }
+  .skeleton.hero,.skeleton.chart { grid-column: 1 / -1; }
+  .skeleton.hero { min-height: 45px; }
+  .skeleton.chart { min-height: 90px; }
+  .skeleton.short { max-width: 85%; }
+  .progress-copy { display: flex; justify-content: space-between; color: #57534e; font-size: .7rem; font-weight: 700; }
+  .progress-rail { height: 4px; overflow: hidden; border-radius: 999px; background: #e7e5e4; }
+  .progress-rail span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#9f1239,#e11d48); transition: width .22s ease; }
+  .frame-wrapper { position: relative; width: 100%; min-height: 96px; overflow: hidden; background: white; }
+  .preview-frame { display: block; width: 100%; max-width: 100%; border: 0; background: transparent; opacity: 0; transition: opacity .22s ease; overflow: hidden; }
+  .frame-wrapper.revealed .preview-frame { opacity: 1; }
+  .preview-frame.scrollable { overflow: auto; }
+  .preparing { position: absolute; inset: 0; display: grid; place-items: center; color: #78716c; background: #fafaf9; font-size: .75rem; }
+  .error-panel { min-height: 130px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; background: #fff7f7; color: #7f1d1d; }
+  .error-panel strong { font-size: .85rem; }
+  .error-panel p { margin: .25rem 0 0; max-width: 60ch; color: #991b1b; font-size: .75rem; line-height: 1.4; }
+  .retry-button { flex: 0 0 auto; border: 1px solid #be123c; border-radius: 6px; padding: .45rem .7rem; color: white; background: #be123c; cursor: pointer; font: inherit; font-size: .75rem; font-weight: 700; }
+  @keyframes shimmer { to { transform: translateX(100%); } }
+  @media (max-width: 480px) { .status-badge { display: none; } .skeleton-grid { grid-template-columns: minmax(0,1fr); } .skeleton.hero,.skeleton.chart { grid-column: auto; } .error-panel { align-items: flex-start; flex-direction: column; } }
+  @media (prefers-reduced-motion: reduce) { .skeleton::after { display: none; } .progress-rail span,.preview-frame { transition: none; } }
 </style>

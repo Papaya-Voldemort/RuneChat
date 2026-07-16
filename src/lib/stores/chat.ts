@@ -1,12 +1,14 @@
 import { get, writable } from "svelte/store";
 import { chatStorage, type ChatMessage, type ChatRecord } from "./chat-db";
+import type { RuneLayoutPart } from "../rune-layout/types";
 
 export type Role = "user" | "assistant";
 
 export type MessagePart =
   | { type: "reasoning"; text: string }
   | { type: "text"; text: string }
-  | { type: "layout"; text: string };
+  | RuneLayoutPart
+  | { type: "warning"; text: string };
 
 export interface Message extends ChatMessage {
   role: Role;
@@ -91,9 +93,26 @@ function cloneMessages(input: Message[]): Message[] {
   return JSON.parse(JSON.stringify(input)) as Message[];
 }
 
+function normalizeHydratedMessages(input: Message[]): Message[] {
+  return input.map((message) => ({
+    ...message,
+    parts: (message.parts ?? []).map((part) =>
+      part.type === "layout" && "status" in part && part.status === "building"
+        ? {
+            type: "layout" as const,
+            status: "error" as const,
+            callId: part.callId,
+            progress: part.progress,
+            error: "This layout build was interrupted. Retry the request to rebuild it.",
+          }
+        : part,
+    ),
+  }));
+}
+
 function setMessagesFromChat(chat: Chat): void {
   hydratingMessages = true;
-  messages.set(chat.messages ?? []);
+  messages.set(normalizeHydratedMessages(chat.messages ?? []));
   hydratingMessages = false;
 }
 

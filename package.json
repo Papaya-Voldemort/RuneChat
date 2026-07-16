@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "test": "bun test",
     "dev": "concurrently \"bun run server.ts\" \"vite\"",
     "build": "vite build",
     "start": "bun run server.ts",

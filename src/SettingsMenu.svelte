@@ -155,7 +155,10 @@
         />
       </div>
       <div class="settings-item toggle-row">
-        <label for="enableLayoutsToggle">Visual Layout Previews</label>
+        <div class="toggle-copy">
+          <label for="enableLayoutsToggle">Visual Layout Previews</label>
+          <small>Interactive artifacts are created only when you explicitly ask. Turning this off removes layout tools.</small>
+        </div>
         <label class="switch-container">
           <input
             type="checkbox"
@@ -296,6 +299,19 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.25rem 0;
+  }
+
+  .toggle-copy {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+  }
+
+  .toggle-copy small {
+    max-width: 28rem;
+    color: #78716c;
+    font-size: .72rem;
+    line-height: 1.35;
   }
 
   .switch-container {

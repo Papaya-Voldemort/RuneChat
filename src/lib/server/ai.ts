@@ -1,5 +1,11 @@
-import { streamText } from "ai";
+import { hasToolCall, stepCountIs, streamText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import type { ChatStreamEvent, RuneLayoutCatalog } from "../rune-layout/types";
+import {
+  createRuneLayoutTools,
+  isToolFallbackCandidate,
+  RUNE_LAYOUT_POLICY,
+} from "./rune-layout-tools";
 
 const DEFAULT_MODEL = "google/gemini-3.1-flash-lite";
 
@@ -7,17 +13,49 @@ function getConfiguredModel(): string {
   return Bun.env.MODEL ?? process.env.MODEL ?? DEFAULT_MODEL;
 }
 
-export async function streamChat(
-  messages: any[],
-  apiKey: string,
-  model?: string,
-  persona?: string,
-  customPrompt?: string,
-  maxTokens?: number,
-  userProfileName?: string,
-  userProfileAbout?: string,
-  enableLayoutPreviews?: boolean,
-) {
+export function applyRuneLayoutPolicy(systemPrompt: string, enabled: boolean): string {
+  return enabled ? `${systemPrompt}\n\n[RUNE LAYOUTS]\n${RUNE_LAYOUT_POLICY}` : systemPrompt;
+}
+
+function describeToolError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  if (typeof error === "string") return error;
+  try {
+    return JSON.stringify(error) || "The layout could not be validated";
+  } catch {
+    return "The layout could not be validated";
+  }
+}
+
+export interface StreamChatOptions {
+  messages: any[];
+  apiKey: string;
+  model?: string;
+  persona?: string;
+  customPrompt?: string;
+  maxTokens?: number;
+  userProfileName?: string;
+  userProfileAbout?: string;
+  enableLayoutPreviews?: boolean;
+  artifacts?: RuneLayoutCatalog;
+}
+
+export async function streamChat(options: StreamChatOptions) {
+  const {
+    messages,
+    apiKey,
+    model,
+    persona,
+    customPrompt,
+    maxTokens,
+    userProfileName,
+    userProfileAbout,
+    enableLayoutPreviews = true,
+    artifacts = {},
+  } = options;
   if (!apiKey) {
     throw new Error("API key is required");
   }
@@ -131,79 +169,121 @@ You believe that truth is best understood through metaphor, resonance, and narra
     systemPrompt = `${userInstructions}\n\n${systemPrompt}`;
   }
 
-  // 2. Instruct the model on prebuilt interactive layout components (only if enabled)
-  if (enableLayoutPreviews !== false) {
-    systemPrompt += `\n\n[IN-CHAT INTERACTIVE PREVIEW CONTROLS]
-Write interactive UI layouts or calculators inside a \`rune-layout\` block. Example:
-\`\`\`rune-layout
-<!-- title: App Title (Optional custom title) -->
-<div class="r-card r-col r-gap-md">
-  <h3 class="r-title">Controls</h3>
-  <button class="r-btn r-btn-prim" onclick="rune.showToast('Hi!', 'success')">Click</button>
-</div>
-\`\`\`
-Guidelines: Keep blocks low-token by using short classes/attributes. Customize container title label via \`<title>Title</title>\`, \`<!-- title: Title -->\`, or \`r-title="Title"\` on root.
-
-Reactivity (using window.rune):
-- \`r-model="key"\`: Two-way binding for inputs (\`<input>\`, \`<select>\`, \`<textarea>\`).
-- \`r-text="key"\`: Output state text inside elements (e.g. \`<span r-text="key"></span>\`).
-- \`r-show="key"\` / \`r-hide="key"\`: Toggle visibility based on state truthiness.
-- Update state in scripts via \`rune.state.key = newValue\`.
-
-Prebuilt Class Reference:
-- Layout: \`.r-card\`, \`.r-glass\`, \`.r-flex\`, \`.r-row\`, \`.r-col\`, \`.r-grid-2\`, \`.r-grid-3\`, \`.r-gap-sm\`|\`md\`|\`lg\`
-- Typography: \`.r-title\`, \`.r-subtitle\`, \`.r-text\`
-- Form Controls: \`.r-input\`, \`.r-select\`, \`.r-slider\`, \`.r-switch\` (parent of checkbox + \`.r-switch-slider\`)
-- Buttons: \`.r-btn\` (default), \`.r-btn-prim\` (primary), \`.r-btn-sec\` (outline secondary)
-- Badges & Alerts: \`.r-badge\` / \`.r-alert\` (with suffix \`-success\`/\`-ok\`, \`-warning\`/\`-warn\`, \`-danger\`/\`-err\`, \`-info\`)
-- Other: \`.r-table\` (data tables), \`.r-avatar\` (profile circles)
-- Accordion: \`<details class="r-accordion"><summary class="r-accordion-summary">Title</summary><div class="r-accordion-content">Content</div></details>\`
-
-Helper Functions:
-- \`rune.showToast(msg, 'success'|'warning'|'danger'|'info')\`
-- \`rune.showModal(id)\` / \`rune.closeModal(id)\` (Modal: \`<div id="id" class="r-modal"><div class="r-modal-content">...</div></div>\`)
-- \`rune.showTab(event, contentId)\` (Tabs: class \`r-tabs\` on container, class \`r-tab\` or raw \`<button>\` on header buttons, class \`r-tab-content active\` on content panes)
-- \`rune.setProgress(id, percent)\` (Progress: class \`r-progress\` with child \`.r-progress-bar\`)
-- Charts: \`rune.createLineChart(id, [values], [labels])\`, \`rune.createBarChart(id, [values], [labels])\`, \`rune.createDonutChart(id, [values], [labels])\` (draws into empty \`<div id="id"></div>\`)`;
-  } else {
-    systemPrompt += `\n\n[CRITICAL NOTE]
-Do NOT output custom \`rune-layout\` code blocks or visual layout blocks. Output standard markdown text and standard code blocks instead.`;
-  }
-
-  const result = await streamText({
-    model: hackclub(selectedModel),
-    system: systemPrompt,
-    messages,
-    maxOutputTokens: maxTokens,
-  });
+  systemPrompt = applyRuneLayoutPolicy(systemPrompt, enableLayoutPreviews);
 
   const encoder = new TextEncoder();
+  const encodeEvent = (event: ChatStreamEvent) => encoder.encode(`${JSON.stringify(event)}\n`);
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      let hasOutput = false;
+      let emitted = false;
 
-      for await (const delta of result.textStream) {
-        if (!delta) continue;
-        hasOutput = true;
-        controller.enqueue(encoder.encode(delta));
+      const run = async (withTools: boolean) => {
+        const layout = withTools ? createRuneLayoutTools(artifacts) : null;
+        const result = streamText({
+          model: hackclub(selectedModel),
+          system: systemPrompt,
+          messages,
+          maxOutputTokens: maxTokens,
+          ...(layout
+            ? {
+                tools: layout.tools,
+                stopWhen: [hasToolCall("render_rune_layout"), stepCountIs(4)],
+              }
+            : {}),
+        });
+
+        const renderBytes = new Map<string, number>();
+        for await (const part of result.fullStream) {
+          let event: ChatStreamEvent | null = null;
+          switch (part.type) {
+            case "text-delta":
+              event = { type: "text-delta", text: part.text };
+              break;
+            case "reasoning-delta":
+              event = { type: "reasoning-delta", text: part.text };
+              break;
+            case "tool-input-start":
+              if (part.toolName === "render_rune_layout") {
+                renderBytes.set(part.id, 0);
+                event = { type: "layout-start", callId: part.id };
+              }
+              break;
+            case "tool-input-delta":
+              if (renderBytes.has(part.id)) {
+                const receivedBytes = (renderBytes.get(part.id) ?? 0) + encoder.encode(part.delta).byteLength;
+                renderBytes.set(part.id, receivedBytes);
+                event = {
+                  type: "layout-progress",
+                  callId: part.id,
+                  receivedBytes,
+                  progress: Math.min(0.94, 0.08 + Math.log2(receivedBytes + 1) / 22),
+                };
+              }
+              break;
+            case "tool-call":
+              if (part.toolName === "render_rune_layout" && layout) {
+                const artifact = layout.renderedArtifacts.get(part.toolCallId);
+                if (artifact) event = { type: "layout-complete", callId: part.toolCallId, artifact };
+              }
+              break;
+            case "tool-result":
+              if (part.toolName === "render_rune_layout" && layout) {
+                const artifact = layout.renderedArtifacts.get(part.toolCallId);
+                if (artifact) event = { type: "layout-complete", callId: part.toolCallId, artifact };
+              }
+              break;
+            case "tool-error":
+              if (part.toolName === "render_rune_layout") {
+                event = {
+                  type: "layout-error",
+                  callId: part.toolCallId,
+                  error: describeToolError(part.error),
+                };
+              }
+              break;
+            case "error":
+              throw part.error;
+          }
+          if (event) {
+            emitted = true;
+            controller.enqueue(encodeEvent(event));
+          }
+        }
+      };
+
+      try {
+        try {
+          await run(enableLayoutPreviews);
+        } catch (error) {
+          if (!enableLayoutPreviews || emitted || !isToolFallbackCandidate(error)) throw error;
+          controller.enqueue(encodeEvent({
+            type: "warning",
+            message: "This model does not support layout tools, so RuneChat continued with a text-only response.",
+          }));
+          emitted = true;
+          await run(false);
+        }
+        if (!emitted) {
+          controller.enqueue(encodeEvent({ type: "error", message: "The model returned an empty response." }));
+        }
+        controller.enqueue(encodeEvent({ type: "done" }));
+      } catch (error) {
+        controller.enqueue(encodeEvent({
+          type: "error",
+          message: error instanceof Error ? error.message : "Unknown streaming error",
+        }));
+        controller.enqueue(encodeEvent({ type: "done" }));
+      } finally {
+        controller.close();
       }
-
-      if (!hasOutput) {
-        controller.enqueue(
-          encoder.encode(
-            "<thinking>I couldn't generate reasoning for this request.</thinking>Sorry, I couldn't generate a response. Please try again.",
-          ),
-        );
-      }
-
-      controller.close();
     },
   });
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Type": "application/x-ndjson; charset=utf-8",
       "Transfer-Encoding": "chunked",
+      "Cache-Control": "no-cache, no-transform",
     },
   });
 }

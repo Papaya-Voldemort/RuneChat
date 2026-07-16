@@ -1,6 +1,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { streamChat } from "./src/lib/server/ai";
+import { validateArtifactCatalog } from "./src/lib/rune-layout/artifacts";
+import type { RuneLayoutCatalog } from "./src/lib/rune-layout/types";
 
 const port = Number(
   Bun.env.PORT ??
@@ -30,6 +32,42 @@ interface ChatRequestBody {
   userProfileName?: string;
   userProfileAbout?: string;
   enableLayoutPreviews?: boolean;
+  artifacts?: RuneLayoutCatalog;
+}
+
+function validateChatBody(value: unknown): Required<Pick<ChatRequestBody, "messages" | "apiKey">> & ChatRequestBody {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Request body must be an object");
+  }
+  const body = value as ChatRequestBody;
+  if (typeof body.apiKey !== "string" || !body.apiKey.trim()) throw new Error("API key is required");
+  if (body.apiKey.length > 4096) throw new Error("API key is too long");
+  if (body.messages !== undefined && (!Array.isArray(body.messages) || body.messages.length > 200)) {
+    throw new Error("Messages must be an array with at most 200 entries");
+  }
+  const messages = (body.messages ?? []).map((message) => {
+    if (!message || typeof message !== "object" || !["user", "assistant"].includes(message.role)) {
+      throw new Error("Each message must have a valid role");
+    }
+    if (typeof message.content !== "string" || message.content.length > 500_000) {
+      throw new Error("Each message must have bounded text content");
+    }
+    return { role: message.role, content: message.content };
+  });
+  const boundedStrings = ["model", "persona", "customPrompt", "userProfileName", "userProfileAbout"] as const;
+  for (const field of boundedStrings) {
+    const fieldValue = body[field];
+    if (fieldValue !== undefined && (typeof fieldValue !== "string" || fieldValue.length > 20_000)) {
+      throw new Error(`${field} is invalid`);
+    }
+  }
+  if (body.maxTokens !== undefined && (!Number.isInteger(body.maxTokens) || body.maxTokens < 1 || body.maxTokens > 1_000_000)) {
+    throw new Error("maxTokens is out of range");
+  }
+  if (body.enableLayoutPreviews !== undefined && typeof body.enableLayoutPreviews !== "boolean") {
+    throw new Error("enableLayoutPreviews must be a boolean");
+  }
+  return { ...body, messages, apiKey: body.apiKey, artifacts: validateArtifactCatalog(body.artifacts) };
 }
 
 async function serveClient(pathname: string): Promise<Response> {
@@ -86,20 +124,11 @@ Bun.serve({
           userProfileName,
           userProfileAbout,
           enableLayoutPreviews,
-        } = (await req.json()) as ChatRequestBody;
+          artifacts,
+        } = validateChatBody(await req.json());
 
-        if (!apiKey) {
-          return Response.json(
-            { error: "API key is required" },
-            {
-              status: 400,
-              headers: corsHeaders,
-            },
-          );
-        }
-
-        const response = await streamChat(
-          messages ?? [],
+        const response = await streamChat({
+          messages,
           apiKey,
           model,
           persona,
@@ -108,7 +137,8 @@ Bun.serve({
           userProfileName,
           userProfileAbout,
           enableLayoutPreviews,
-        );
+          artifacts,
+        });
 
         const headers = new Headers(response.headers);
         Object.entries(corsHeaders).forEach(([key, value]) =>
@@ -127,7 +157,7 @@ Bun.serve({
         return Response.json(
           { error: message },
           {
-            status: 500,
+            status: /required|invalid|range|array|bounded|at most|too long/i.test(message) ? 400 : 500,
             headers: corsHeaders,
           },
         );

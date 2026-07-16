@@ -13,10 +13,11 @@
     initializeChatStore,
     messages,
     draftPrompt,
-    isStreaming,
   } from "./lib/stores/chat";
   import { selectedPersona, enableLayoutPreviews } from "./lib/stores/settings";
   import RuneLayoutPreview from "./RuneLayoutPreview.svelte";
+  import { convertLegacyLayout } from "./lib/rune-layout/artifacts";
+  import type { RuneLayoutArtifact, RuneLayoutPart, RuneLayoutStatus } from "./lib/rune-layout/types";
 
   let messagesContainer: HTMLElement;
 
@@ -58,6 +59,30 @@
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
+  }
+
+  function layoutArtifact(part: RuneLayoutPart, messageId: string, partIndex: number): RuneLayoutArtifact | undefined {
+    if ("status" in part && part.status === "ready") return part.artifact;
+    if ("status" in part && part.status === "error" && part.artifact) return part.artifact;
+    if ("text" in part) {
+      try {
+        return convertLegacyLayout(part.text, `legacy-${messageId}-${partIndex}`);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+
+  function layoutStatus(part: RuneLayoutPart, messageId: string, partIndex: number): RuneLayoutStatus {
+    if ("status" in part && part.status) return part.status;
+    return layoutArtifact(part, messageId, partIndex) ? "ready" : "error";
+  }
+
+  function layoutSource(part: RuneLayoutPart, messageId: string, partIndex: number): string {
+    const artifact = layoutArtifact(part, messageId, partIndex);
+    if (!artifact) return "text" in part ? part.text : "Layout source unavailable.";
+    return [artifact.markup, artifact.css ? `<style>\n${artifact.css}\n</style>` : "", artifact.script ? `<script>\n${artifact.script}\n<\/script>` : ""].filter(Boolean).join("\n\n");
   }
 </script>
 
@@ -120,7 +145,7 @@
         </div>
       </div>
     {:else}
-      {#each $messages as message, msgIndex (message.id)}
+      {#each $messages as message (message.id)}
         <div class="message-wrapper {message.role}">
           {#if message.parts?.length}
             {#if message.parts.some((p) => p.type === "reasoning")}
@@ -150,16 +175,20 @@
               {:else if part.type === "layout"}
                 {#if $enableLayoutPreviews}
                   <div class="layouts-container">
-                    <RuneLayoutPreview 
-                      code={part.text} 
-                      isBuilding={$isStreaming && msgIndex === $messages.length - 1 && partIndex === message.parts.length - 1} 
+                    <RuneLayoutPreview
+                      artifact={layoutArtifact(part, message.id, partIndex)}
+                      status={layoutStatus(part, message.id, partIndex)}
+                      progress={"progress" in part ? part.progress : 1}
+                      error={"error" in part ? part.error : "This stored layout could not be converted safely."}
                     />
                   </div>
                 {:else}
                   <div class="message-bubble">
-                    {@html renderMarkdown("```html\n" + part.text + "\n```")}
+                    {@html renderMarkdown("```html\n" + layoutSource(part, message.id, partIndex) + "\n```")}
                   </div>
                 {/if}
+              {:else if part.type === "warning"}
+                <div class="stream-warning" role="status">{part.text}</div>
               {/if}
             {/each}
           {:else}
@@ -222,7 +251,7 @@
     flex-direction: column;
     height: 100vh;
     width: 100%;
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
 
     background: inherit;
@@ -577,9 +606,28 @@
 
   .layouts-container {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     margin-top: 0.5rem;
+  }
+
+  .stream-warning {
+    max-width: min(100%, 44rem);
+    margin-top: .35rem;
+    border-left: 3px solid #b45309;
+    border-radius: 4px;
+    padding: .45rem .65rem;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: .75rem;
+  }
+
+  @media (max-width: 640px) {
+    .messages { padding-inline: .6rem; }
+    .message-bubble,.thinking-details { max-width: 92%; }
+    .message-wrapper.assistant .layouts-container { width: 100%; }
   }
 </style>
