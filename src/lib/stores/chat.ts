@@ -1,18 +1,20 @@
 import { get, writable } from "svelte/store";
 import { chatStorage, type ChatMessage, type ChatRecord } from "./chat-db";
-import type { RuneLayoutPart } from "../rune-layout/types";
+import type { ChatUsage, RuneLayoutPart } from "../rune-layout/types";
 
 export type Role = "user" | "assistant";
 
 export type MessagePart =
   | { type: "reasoning"; text: string }
   | { type: "text"; text: string }
+  | { type: "attachment"; name: string; mimeType: string; size: number; content: string }
   | RuneLayoutPart
   | { type: "warning"; text: string };
 
 export interface Message extends ChatMessage {
   role: Role;
   parts: MessagePart[];
+  usage?: ChatUsage;
 }
 
 type Chat = ChatRecord<Message>;

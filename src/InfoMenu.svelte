@@ -96,10 +96,10 @@
     z-index: 1000;
 
     padding: 1.5rem;
-    border: solid var(--border-thin) var(--color-border-muted);
+    border: solid var(--border-thin) var(--color-border);
     border-radius: var(--radius-md);
     background-color: var(--color-bg);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
 
     width: 90%;
     max-width: 500px;
@@ -111,7 +111,7 @@
   .underlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.45);
+    background-color: var(--color-overlay);
     z-index: 999;
     backdrop-filter: blur(4px);
   }

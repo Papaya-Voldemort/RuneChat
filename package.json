@@ -25,6 +25,7 @@
     "@openrouter/ai-sdk-provider": "^2.9.0",
     "ai": "^6.0.177",
     "dompurify": "^3.4.2",
-    "marked": "^18.0.3"
+    "marked": "^18.0.3",
+    "prettier": "^3.9.5"
   }
 }

@@ -320,6 +320,7 @@
     padding: 0.5rem;
     opacity: 1 !important;
     background-color: var(--color-bg);
+    border-right: var(--border-thin) solid var(--color-border);
     pointer-events: auto;
   }
 
@@ -509,12 +510,7 @@
   .deleteChat:hover {
     border-color: var(--color-primary);
     background: var(--color-bg-hover);
-    color: #ef4444;
-  }
-
-  .deleteChat:hover {
-    border-color: var(--color-primary);
-    background: var(--color-bg-hover);
+    color: var(--color-danger);
   }
 
   .emptyState {

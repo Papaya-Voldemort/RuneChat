@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createChatStreamAssembler, decodeNdjson } from "./chat-stream";
+import { createChatStreamAssembler, decodeNdjson, streamChatRequest } from "./chat-stream";
 import type { ChatStreamEvent } from "../rune-layout/types";
 
 function fragmentedStream(bytes: Uint8Array, boundaries: number[]): ReadableStream<Uint8Array> {
@@ -89,5 +89,30 @@ describe("message assembly", () => {
     assembler.apply({ type: "done" });
     assembler.finish(false);
     expect(assembler.parts[0]).toMatchObject({ type: "layout", status: "error", callId: "render-3" });
+  });
+});
+
+describe("stream snapshots", () => {
+  test("does not mutate parts already handed to the UI", async () => {
+    const events: ChatStreamEvent[] = [
+      { type: "text-delta", text: "Hello" },
+      { type: "text-delta", text: " world" },
+      { type: "done" },
+    ];
+    const body = fragmentedStream(
+      new TextEncoder().encode(events.map((event) => JSON.stringify(event)).join("\n") + "\n"),
+      [44, 89],
+    );
+    const snapshots: Array<ReturnType<typeof createChatStreamAssembler>["parts"]> = [];
+
+    await streamChatRequest(
+      { messages: [], apiKey: "test" },
+      (parts) => snapshots.push(parts),
+      async () => new Response(body),
+    );
+
+    expect(snapshots[0]?.[0]).toEqual({ type: "text", text: "Hello" });
+    expect(snapshots.at(-1)?.[0]).toEqual({ type: "text", text: "Hello world" });
+    expect(snapshots[0]?.[0]).not.toBe(snapshots.at(-1)?.[0]);
   });
 });

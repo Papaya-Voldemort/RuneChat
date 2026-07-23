@@ -1,25 +1,136 @@
 :root {
-  --color-bg: #ffffff;
-  --color-bg-hover: #e2e2e2;
-  --color-primary: #a51c30;
-  --color-border-muted: #78716c;
-  --color-shadow: rgba(0, 0, 0, 0.1);
+  color-scheme: light;
 
-  --radius-sm: 3px;
-  --radius-md: 5px;
+  /* Brand */
+  --color-primary: #b4233b;
+  --color-primary-hover: #921c31;
+  --color-primary-soft: #fff0f2;
+  --color-primary-soft-strong: #ffdce2;
+  --color-on-primary: #ffffff;
 
-  --border-thick: 3px;
+  /* Surfaces */
+  --color-canvas: #f6f4f2;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #efedeb;
+  --color-surface-hover: #e8e4e2;
+  --color-surface-active: #dfd9d7;
+  --color-code: #f2efed;
+
+  /* Content and borders */
+  --color-text: #201d1c;
+  --color-text-muted: #6b6561;
+  --color-text-subtle: #918a86;
+  --color-border: #d9d3d0;
+  --color-border-strong: #aaa19d;
+  --color-focus-ring: rgb(180 35 59 / 0.34);
+
+  /* Feedback */
+  --color-danger: #cf3e4d;
+  --color-danger-soft: #fff1f1;
+  --color-danger-text: #9e2633;
+  --color-success: #238551;
+  --color-success-soft: #e9f8ef;
+  --color-success-text: #17663b;
+  --color-warning: #b76b11;
+  --color-warning-soft: #fff7df;
+  --color-warning-text: #8b4c09;
+
+  /* Effects */
+  --color-overlay: rgb(23 19 18 / 0.52);
+  --color-scrim: rgb(32 29 28 / 0.06);
+  --color-scrim-subtle: rgb(32 29 28 / 0.035);
+  --color-scrim-strong: rgb(32 29 28 / 0.1);
+  --color-on-primary-subtle: rgb(255 255 255 / 0.2);
+  --color-on-primary-muted: rgb(255 255 255 / 0.88);
+  --color-on-primary-border: rgb(255 255 255 / 0.5);
+  --color-skeleton: #e3dfdc;
+  --color-skeleton-shine: rgb(255 255 255 / 0.7);
+  --shadow-sm: 0 1px 2px rgb(32 29 28 / 0.07);
+  --shadow-md: 0 5px 18px rgb(32 29 28 / 0.1);
+  --shadow-lg: 0 18px 48px rgb(32 29 28 / 0.18);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --border-thick: 2px;
   --border-thin: 1px;
+
+  /* Legacy aliases kept while components migrate to semantic tokens. */
+  --color-bg: var(--color-surface);
+  --color-bg-hover: var(--color-surface-hover);
+  --color-border-muted: var(--color-border-strong);
+  --color-shadow: rgb(32 29 28 / 0.1);
 }
 
-* {
-  box-sizing: border-box;
+.dark {
+  color-scheme: dark;
+  --color-primary: #fb7185;
+  --color-primary-hover: #fda4af;
+  --color-primary-soft: #3a1720;
+  --color-primary-soft-strong: #57212d;
+  --color-on-primary: #2b0b11;
+
+  --color-canvas: #141212;
+  --color-surface: #1d1a1a;
+  --color-surface-raised: #242020;
+  --color-surface-sunken: #171515;
+  --color-surface-hover: #302a2a;
+  --color-surface-active: #3b3333;
+  --color-code: #282323;
+
+  --color-text: #f6f1f0;
+  --color-text-muted: #c7bdbb;
+  --color-text-subtle: #958987;
+  --color-border: #443c3b;
+  --color-border-strong: #665957;
+  --color-focus-ring: rgb(251 113 133 / 0.5);
+
+  --color-danger: #fb7185;
+  --color-danger-soft: #3c1920;
+  --color-danger-text: #fecdd3;
+  --color-success: #4ade80;
+  --color-success-soft: #163321;
+  --color-success-text: #bbf7d0;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #3c2d12;
+  --color-warning-text: #fde68a;
+
+  --color-overlay: rgb(0 0 0 / 0.7);
+  --color-scrim: rgb(255 255 255 / 0.075);
+  --color-scrim-subtle: rgb(255 255 255 / 0.045);
+  --color-scrim-strong: rgb(255 255 255 / 0.12);
+  --color-on-primary-subtle: rgb(43 11 17 / 0.28);
+  --color-on-primary-muted: rgb(43 11 17 / 0.78);
+  --color-on-primary-border: rgb(43 11 17 / 0.45);
+  --color-skeleton: #332d2c;
+  --color-skeleton-shine: rgb(255 255 255 / 0.1);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 7px 22px rgb(0 0 0 / 0.38);
+  --shadow-lg: 0 20px 56px rgb(0 0 0 / 0.55);
+  --color-bg: #1d1a1a;
+  --color-bg-hover: #302a2a;
+  --color-border-muted: #665957;
+  --color-shadow: rgb(0 0 0 / 0.38);
 }
+
+* { box-sizing: border-box; }
+
+html, body, #app { min-width: 0; min-height: 100%; }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #ececec;
+  background-color: var(--color-canvas);
+  color: var(--color-text);
+  font-family: "Space Grotesk", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-weight: 400;
-  font-family: 'Space Grotesk', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button, input, select, textarea { font: inherit; }
+button, select { color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }

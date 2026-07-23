@@ -24,6 +24,7 @@ const corsHeaders = {
 
 interface ChatRequestBody {
   messages?: any[];
+  attachments?: Array<{ name: string; mimeType: string; size: number; content: string }>;
   apiKey?: string;
   model?: string;
   persona?: string;
@@ -33,6 +34,28 @@ interface ChatRequestBody {
   userProfileAbout?: string;
   enableLayoutPreviews?: boolean;
   artifacts?: RuneLayoutCatalog;
+}
+
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const MAX_ATTACHMENT_TEXT_LENGTH = 500_000;
+const allowedAttachmentExtensions = new Set([
+  ".txt", ".md", ".csv", ".json", ".js", ".ts", ".tsx", ".jsx", ".html", ".css", ".xml", ".yaml", ".yml", ".py", ".java", ".c", ".cpp", ".h", ".sql", ".sh", ".log",
+]);
+
+function validateAttachment(value: unknown): { name: string; mimeType: string; size: number; content: string } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("attachment is invalid");
+  const attachment = value as Record<string, unknown>;
+  if (typeof attachment.name !== "string" || !attachment.name.trim() || attachment.name.length > 255) {
+    throw new Error("attachment name is invalid");
+  }
+  if (typeof attachment.mimeType !== "string" || attachment.mimeType.length > 255) throw new Error("attachment type is invalid");
+  if (typeof attachment.size !== "number" || !Number.isInteger(attachment.size) || attachment.size < 0 || attachment.size > MAX_ATTACHMENT_BYTES) {
+    throw new Error("attachment size is invalid");
+  }
+  if (typeof attachment.content !== "string" || attachment.content.length > MAX_ATTACHMENT_TEXT_LENGTH) {
+    throw new Error("attachment content is invalid");
+  }
+  return { name: attachment.name, mimeType: attachment.mimeType, size: attachment.size, content: attachment.content };
 }
 
 function validateChatBody(value: unknown): Required<Pick<ChatRequestBody, "messages" | "apiKey">> & ChatRequestBody {
@@ -54,6 +77,10 @@ function validateChatBody(value: unknown): Required<Pick<ChatRequestBody, "messa
     }
     return { role: message.role, content: message.content };
   });
+  if (body.attachments !== undefined && (!Array.isArray(body.attachments) || body.attachments.length > 10)) {
+    throw new Error("attachments must contain at most 10 files");
+  }
+  const attachments = (body.attachments ?? []).map(validateAttachment);
   const boundedStrings = ["model", "persona", "customPrompt", "userProfileName", "userProfileAbout"] as const;
   for (const field of boundedStrings) {
     const fieldValue = body[field];
@@ -67,7 +94,7 @@ function validateChatBody(value: unknown): Required<Pick<ChatRequestBody, "messa
   if (body.enableLayoutPreviews !== undefined && typeof body.enableLayoutPreviews !== "boolean") {
     throw new Error("enableLayoutPreviews must be a boolean");
   }
-  return { ...body, messages, apiKey: body.apiKey, artifacts: validateArtifactCatalog(body.artifacts) };
+  return { ...body, messages, attachments, apiKey: body.apiKey, artifacts: validateArtifactCatalog(body.artifacts) };
 }
 
 async function serveClient(pathname: string): Promise<Response> {
@@ -112,10 +139,43 @@ Bun.serve({
       });
     }
 
+    if (url.pathname === "/api/attachments" && req.method === "POST") {
+      try {
+        const formData = await req.formData();
+        const file = formData.get("file");
+        if (!(file instanceof File)) throw new Error("Choose a file to upload");
+        if (file.size > MAX_ATTACHMENT_BYTES) throw new Error("Files must be 5 MB or smaller");
+
+        const extension = path.extname(file.name).toLowerCase();
+        if (!allowedAttachmentExtensions.has(extension)) {
+          throw new Error("That file type is not supported yet. Upload a text, code, CSV, JSON, or Markdown file.");
+        }
+
+        const content = (await file.text()).replace(/\u0000/g, "");
+        if (content.length > MAX_ATTACHMENT_TEXT_LENGTH) {
+          throw new Error("The file contains too much text to attach");
+        }
+
+        return Response.json({
+          name: path.basename(file.name),
+          mimeType: file.type || "text/plain",
+          size: file.size,
+          content,
+        }, { headers: corsHeaders });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not process attachment";
+        return Response.json({ error: message }, {
+          status: /choose|smaller|supported|too much/i.test(message) ? 400 : 500,
+          headers: corsHeaders,
+        });
+      }
+    }
+
     if (url.pathname === "/api/chat" && req.method === "POST") {
       try {
         const {
           messages,
+          attachments,
           apiKey,
           model,
           persona,

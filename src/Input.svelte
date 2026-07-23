@@ -28,6 +28,15 @@
   import { streamChatRequest } from "./lib/functions/chat-stream";
   import { compactArtifactMarker, convertLegacyLayout } from "./lib/rune-layout/artifacts";
   import type { RuneLayoutArtifact, RuneLayoutCatalog } from "./lib/rune-layout/types";
+  import PopUp from "./PopUp.svelte";
+  import type { UploadedAttachment } from "./PopUp.svelte";
+
+  let isPopUpOpen = false;
+  let attachments: UploadedAttachment[] = [];
+
+  function togglePopUp() {
+    isPopUpOpen = !isPopUpOpen;
+  }
 
   let textareaRef: HTMLTextAreaElement;
   let message = "";
@@ -58,6 +67,7 @@
     }
 
     const userContent = message;
+    const outgoingAttachments = attachments;
 
     const currentMsgs = get(messages);
     const isFirstMessage = currentMsgs.length === 0;
@@ -67,7 +77,10 @@
       {
         id: crypto.randomUUID(),
         role: "user",
-        parts: [{ type: "text", text: userContent }],
+        parts: [
+          { type: "text", text: userContent },
+          ...outgoingAttachments.map((attachment) => ({ type: "attachment" as const, ...attachment })),
+        ],
         timestamp: new Date().toISOString(),
       },
     ]);
@@ -97,6 +110,7 @@
     }
 
     message = "";
+    attachments = [];
     if (textareaRef) {
       textareaRef.style.height = "auto";
     }
@@ -127,6 +141,7 @@
 
       await streamChatRequest({
         messages: providerMessages,
+        attachments: outgoingAttachments,
         artifacts,
         apiKey: currentApiKey,
         model: activeModel,
@@ -138,6 +153,10 @@
         enableLayoutPreviews: get(enableLayoutPreviews),
       }, (parts) => {
         updateAssistantParts(assistantId, parts);
+      }, fetch, (usage) => {
+        messages.update((msgs) => msgs.map((msg) =>
+          msg.id === assistantId ? { ...msg, usage } : msg,
+        ));
       });
     } catch (error) {
       console.error("Chat error:", error);
@@ -154,14 +173,9 @@
   }
 
   function updateAssistantParts(id: string, nextParts: MessagePart[]) {
-    messages.update((msgs) => {
-      const updated = [...msgs];
-      const assistantMsg = updated.find((m) => m.id === id);
-
-      if (!assistantMsg) return updated;
-      assistantMsg.parts = nextParts;
-      return updated;
-    });
+    messages.update((msgs) => msgs.map((message) =>
+      message.id === id ? { ...message, parts: nextParts } : message,
+    ));
   }
 
   function getRequestContext(assistantId: string): {
@@ -176,6 +190,9 @@
 
       for (const part of parts) {
         if (part.type === "text") content.push(part.text);
+        if (part.type === "attachment") {
+          content.push(`\n\n[Attached file: ${part.name}]\n${part.content}\n[End attached file]`);
+        }
         if (part.type !== "layout") continue;
         let artifact: RuneLayoutArtifact | undefined;
         if ("status" in part && part.status === "ready") artifact = part.artifact;
@@ -212,28 +229,57 @@
       }
     }
   }
+
+  function addAttachment(attachment: UploadedAttachment): void {
+    attachments = [...attachments, attachment];
+  }
+
+  function removeAttachment(index: number): void {
+    attachments = attachments.filter((_, attachmentIndex) => attachmentIndex !== index);
+  }
 </script>
 
-<div class="chat-input">
-  <button class="add-btn" disabled={loading}>
-      <img src={addIcon} alt="Add tools or upload media" />
-  </button>
-    <textarea
-      bind:this={textareaRef}
-      name="input"
-      id="input"
-      placeholder="Type a message..."
-      bind:value={message}
-      on:input={autoResize}
-      on:keydown={handleKeydown}
-      disabled={loading}
-      rows="1"
-    ></textarea>
+<div class="chat-input-wrapper">
+    {#if isPopUpOpen}
+      <PopUp onClose={() => (isPopUpOpen = false)} onAttachment={addAttachment} />
+    {/if}
 
-    <button class="send-btn" on:click={send} disabled={loading}>
-      <img src={sendMessageIcon} alt="Send Message" />
-    </button>
+    {#if attachments.length}
+      <div class="attachment-list" aria-label="Attached files">
+        {#each attachments as attachment, index}
+          <span class="attachment-chip">{attachment.name}<button type="button" onclick={() => removeAttachment(index)} aria-label={`Remove ${attachment.name}`}>×</button></span>
+        {/each}
+      </div>
+    {/if}
+    <div class="chat-input">
+        <button
+          class="add-btn"
+          disabled={loading}
+          onclick={togglePopUp}
+          aria-expanded={isPopUpOpen}
+          aria-label="Add tools or upload media"
+        >
+          <img src={addIcon} alt="" />
+        </button>
+        <textarea
+          bind:this={textareaRef}
+          name="input"
+          id="input"
+          placeholder="Type a message..."
+          bind:value={message}
+          oninput={autoResize}
+          onkeydown={handleKeydown}
+          disabled={loading}
+          rows="1"
+        ></textarea>
+
+        <button class="send-btn" onclick={send} disabled={loading}>
+          <img src={sendMessageIcon} alt="Send Message" />
+        </button>
+    </div>
+
 </div>
+
 
 <style>
   .chat-input {
@@ -244,10 +290,10 @@
     padding: 10px 12px;
 
     background: var(--color-bg);
-    border: var(--border-thin) solid var(--color-border-muted);
+    border: var(--border-thin) solid var(--color-border);
     border-radius: var(--radius-md);
 
-    box-shadow: 0 2px 6px var(--color-shadow);
+    box-shadow: var(--shadow-md);
 
     width: 100%;
     max-width: 600px;
@@ -261,12 +307,12 @@
     background: transparent;
 
     font-size: 14px;
-    color: #222;
+    color: var(--color-text);
     resize: none;
   }
 
   .chat-input textarea::placeholder {
-    color: #999;
+    color: var(--color-text-subtle);
   }
 
   .send-btn {
@@ -278,7 +324,7 @@
     height: 36px;
 
     border-radius: var(--radius-sm);
-    border: var(--border-thin) solid var(--color-border-muted);
+    border: var(--border-thin) solid var(--color-border);
 
     background: var(--color-bg);
     cursor: pointer;
@@ -318,7 +364,7 @@
     border: var(--border-thin) solid var(--color-border-muted);
 
     background: var(--color-bg);
-    color: var(--color-border-muted);
+    color: var(--color-text-muted);
     cursor: pointer;
 
     transition: all 0.15s ease;
@@ -326,7 +372,7 @@
 
   .add-btn:hover {
     background: var(--color-bg-hover);
-    color: #222;
+    color: var(--color-text);
   }
 
   .add-btn:active {
@@ -338,9 +384,20 @@
     cursor: not-allowed;
   }
 
-  .add-icon {
-    width: 16px;
-    height: 16px;
+  .add-btn[aria-expanded="true"] { background: var(--color-primary-soft); border-color: var(--color-primary); transform: rotate(45deg); }
+
+  .chat-input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
   }
+
+  .chat-input {
+    max-width: none;
+  }
+
+  .attachment-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 8px; }
+  .attachment-chip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 5px 6px 5px 9px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface-raised); color: var(--color-text-muted); font-size: 12px; }
+  .attachment-chip button { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-text-muted); cursor: pointer; font-size: 16px; line-height: 1; }.attachment-chip button:hover { background: var(--color-surface-hover); color: var(--color-text); }
 
 </style>

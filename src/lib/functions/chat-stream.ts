@@ -1,5 +1,5 @@
 import type { MessagePart } from "../stores/chat";
-import type { ChatRequestPayload, ChatStreamEvent } from "../rune-layout/types";
+import type { ChatRequestPayload, ChatStreamEvent, ChatUsage } from "../rune-layout/types";
 
 const OPEN_THINKING = "<thinking>";
 const CLOSE_THINKING = "</thinking>";
@@ -103,8 +103,13 @@ function appendTextPart(parts: MessagePart[], type: "text" | "reasoning", text: 
   }
 }
 
+function snapshotParts(parts: MessagePart[]): MessagePart[] {
+  return structuredClone(parts);
+}
+
 export interface ChatStreamAssembler {
   readonly parts: MessagePart[];
+  readonly usage: ChatUsage | undefined;
   apply(event: ChatStreamEvent): void;
   finish(interrupted?: boolean): void;
 }
@@ -113,6 +118,7 @@ export function createChatStreamAssembler(): ChatStreamAssembler {
   const parts: MessagePart[] = [];
   const thinking = new ThinkingTagParser();
   let completed = false;
+  let usage: ChatStreamAssembler["usage"];
 
   function appendParsed(chunks: Array<{ channel: TextChannel; text: string }>): void {
     for (const chunk of chunks) appendTextPart(parts, chunk.channel, chunk.text);
@@ -120,6 +126,9 @@ export function createChatStreamAssembler(): ChatStreamAssembler {
 
   return {
     parts,
+    get usage() {
+      return usage;
+    },
     apply(event) {
       switch (event.type) {
         case "text-delta":
@@ -182,6 +191,9 @@ export function createChatStreamAssembler(): ChatStreamAssembler {
         case "warning":
           parts.push({ type: "warning", text: event.message });
           break;
+        case "usage":
+          usage = event.usage;
+          break;
         case "error":
           appendTextPart(parts, "text", `\n\nSorry, the response failed: ${event.message}`);
           break;
@@ -215,6 +227,7 @@ export async function streamChatRequest(
   payload: ChatRequestPayload,
   onParts: (parts: MessagePart[]) => void,
   fetcher: typeof fetch = fetch,
+  onUsage?: (usage: NonNullable<ChatStreamAssembler["usage"]>) => void,
 ): Promise<void> {
   const response = await fetcher("/api/chat", {
     method: "POST",
@@ -232,10 +245,11 @@ export async function streamChatRequest(
     for await (const event of decodeNdjson(response.body)) {
       assembler.apply(event);
       done ||= event.type === "done";
-      onParts([...assembler.parts]);
+      onParts(snapshotParts(assembler.parts));
     }
   } finally {
     assembler.finish(!done);
-    onParts([...assembler.parts]);
+    onParts(snapshotParts(assembler.parts));
+    if (assembler.usage) onUsage?.(assembler.usage);
   }
 }

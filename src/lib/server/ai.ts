@@ -1,6 +1,6 @@
 import { hasToolCall, stepCountIs, streamText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import type { ChatStreamEvent, RuneLayoutCatalog } from "../rune-layout/types";
+import type { ChatStreamEvent, ChatUsage, RuneLayoutCatalog } from "../rune-layout/types";
 import {
   createRuneLayoutTools,
   isToolFallbackCandidate,
@@ -8,6 +8,97 @@ import {
 } from "./rune-layout-tools";
 
 const DEFAULT_MODEL = "google/gemini-3.1-flash-lite";
+
+interface OpenRouterPricing {
+  prompt?: string;
+  completion?: string;
+  request?: string;
+  internal_reasoning?: string;
+  input_cache_read?: string;
+  input_cache_write?: string;
+}
+
+const pricingCache = new Map<string, OpenRouterPricing | null>();
+
+async function getOpenRouterPricing(model: string): Promise<OpenRouterPricing | null> {
+  if (pricingCache.has(model)) return pricingCache.get(model) ?? null;
+
+  const [author, slug] = model.split("/", 2);
+  if (!author || !slug) return null;
+
+  try {
+    const response = await fetch(
+      `https://openrouter.ai/api/v1/model/${encodeURIComponent(author)}/${encodeURIComponent(slug)}`,
+    );
+    if (!response.ok) {
+      pricingCache.set(model, null);
+      return null;
+    }
+    const body = await response.json() as { data?: { pricing?: OpenRouterPricing } };
+    const pricing = body.data?.pricing ?? null;
+    pricingCache.set(model, pricing);
+    return pricing;
+  } catch {
+    return null;
+  }
+}
+
+function numberPrice(value: string | undefined): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function buildUsage(
+  model: string,
+  totalUsage: {
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+    reasoningTokens?: number;
+    cachedInputTokens?: number;
+    inputTokenDetails?: { noCacheTokens?: number; cacheReadTokens?: number; cacheWriteTokens?: number };
+    outputTokenDetails?: { textTokens?: number; reasoningTokens?: number };
+  },
+  durationMs: number,
+): Promise<ChatUsage> {
+  const pricing = await getOpenRouterPricing(model);
+  const inputTokens = totalUsage.inputTokens;
+  const outputTokens = totalUsage.outputTokens;
+  const reasoningTokens = totalUsage.outputTokenDetails?.reasoningTokens ?? totalUsage.reasoningTokens;
+  const cachedInputTokens = totalUsage.inputTokenDetails?.cacheReadTokens ?? totalUsage.cachedInputTokens;
+  const textOutputTokens = totalUsage.outputTokenDetails?.textTokens;
+
+  let costUsd: number | undefined;
+  if (pricing) {
+    const inputPrice = numberPrice(pricing.prompt);
+    const outputPrice = numberPrice(pricing.completion);
+    const noCacheInput = totalUsage.inputTokenDetails?.noCacheTokens;
+    const cacheReadInput = totalUsage.inputTokenDetails?.cacheReadTokens;
+    const cacheWriteInput = totalUsage.inputTokenDetails?.cacheWriteTokens;
+    const inputCost = noCacheInput !== undefined || cacheReadInput !== undefined || cacheWriteInput !== undefined
+      ? (noCacheInput ?? 0) * inputPrice
+        + (cacheReadInput ?? 0) * numberPrice(pricing.input_cache_read)
+        + (cacheWriteInput ?? 0) * numberPrice(pricing.input_cache_write)
+      : (inputTokens ?? 0) * inputPrice;
+    const outputCost = reasoningTokens !== undefined && textOutputTokens !== undefined
+      ? textOutputTokens * outputPrice + reasoningTokens * numberPrice(pricing.internal_reasoning || pricing.completion)
+      : (outputTokens ?? 0) * outputPrice;
+    costUsd = inputCost + outputCost + numberPrice(pricing.request);
+  }
+
+  return {
+    model,
+    inputTokens,
+    outputTokens,
+    totalTokens: totalUsage.totalTokens,
+    reasoningTokens,
+    cachedInputTokens,
+    durationMs,
+    tokensPerSecond: outputTokens && durationMs > 0 ? outputTokens / (durationMs / 1000) : undefined,
+    costUsd,
+    pricingAvailable: pricing !== null,
+  };
+}
 
 function getConfiguredModel(): string {
   return Bun.env.MODEL ?? process.env.MODEL ?? DEFAULT_MODEL;
@@ -178,6 +269,7 @@ You believe that truth is best understood through metaphor, resonance, and narra
       let emitted = false;
 
       const run = async (withTools: boolean) => {
+        const startedAt = performance.now();
         const layout = withTools ? createRuneLayoutTools(artifacts) : null;
         const result = streamText({
           model: hackclub(selectedModel),
@@ -193,6 +285,7 @@ You believe that truth is best understood through metaphor, resonance, and narra
         });
 
         const renderBytes = new Map<string, number>();
+        let totalUsage: Awaited<typeof result.totalUsage> | undefined;
         for await (const part of result.fullStream) {
           let event: ChatStreamEvent | null = null;
           switch (part.type) {
@@ -243,11 +336,22 @@ You believe that truth is best understood through metaphor, resonance, and narra
               break;
             case "error":
               throw part.error;
+            case "finish":
+              totalUsage = part.totalUsage;
+              break;
           }
           if (event) {
             emitted = true;
             controller.enqueue(encodeEvent(event));
           }
+        }
+
+        if (totalUsage && totalUsage.totalTokens !== undefined) {
+          emitted = true;
+          controller.enqueue(encodeEvent({
+            type: "usage",
+            usage: await buildUsage(selectedModel, totalUsage, performance.now() - startedAt),
+          }));
         }
       };
 

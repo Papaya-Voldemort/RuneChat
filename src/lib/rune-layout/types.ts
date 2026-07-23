@@ -59,6 +59,19 @@ export interface RuneLayoutReference {
 
 export type RuneLayoutCatalog = Record<string, RuneLayoutArtifact>;
 
+export interface ChatUsage {
+  model: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  reasoningTokens?: number;
+  cachedInputTokens?: number;
+  durationMs: number;
+  tokensPerSecond?: number;
+  costUsd?: number;
+  pricingAvailable: boolean;
+}
+
 export type ChatStreamEvent =
   | { type: "text-delta"; text: string }
   | { type: "reasoning-delta"; text: string }
@@ -67,11 +80,13 @@ export type ChatStreamEvent =
   | { type: "layout-complete"; callId: string; artifact: RuneLayoutArtifact }
   | { type: "layout-error"; callId: string; error: string }
   | { type: "warning"; message: string }
+  | { type: "usage"; usage: ChatUsage }
   | { type: "error"; message: string }
   | { type: "done" };
 
 export interface ChatRequestPayload {
   messages: Array<{ role: string; content: string }>;
+  attachments?: Array<{ name: string; mimeType: string; size: number; content: string }>;
   apiKey: string;
   model?: string;
   persona?: string;

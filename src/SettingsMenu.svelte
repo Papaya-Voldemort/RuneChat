@@ -210,10 +210,10 @@
     transform: translate(-50%, -50%);
     z-index: 1000;
     padding: 1.5rem;
-    border: solid var(--border-thin) var(--color-border-muted);
+    border: solid var(--border-thin) var(--color-border);
     border-radius: 12px;
     background-color: var(--color-bg);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
     width: 90%;
     max-width: 480px;
     box-sizing: border-box;
@@ -222,7 +222,7 @@
   .underlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.45);
+    background-color: var(--color-overlay);
     z-index: 999;
     backdrop-filter: blur(4px);
   }
@@ -260,10 +260,10 @@
     padding: 10px 12px;
 
     background: var(--color-bg);
-    border: var(--border-thin) solid var(--color-border-muted);
+    border: var(--border-thin) solid var(--color-border);
     border-radius: var(--radius-md);
 
-    box-shadow: 0 2px 6px var(--color-shadow);
+    box-shadow: var(--shadow-sm);
 
     width: 100%;
     max-width: 100%;
@@ -281,12 +281,12 @@
   textarea {
     padding: 10px 12px;
     background: var(--color-bg);
-    border: var(--border-thin) solid var(--color-border-muted);
+    border: var(--border-thin) solid var(--color-border);
     border-radius: var(--radius-md);
-    box-shadow: 0 2px 6px var(--color-shadow);
+    box-shadow: var(--shadow-sm);
     width: 100%;
     font-size: 14px;
-    color: #222;
+    color: var(--color-text);
     font-family: inherit;
     outline: none;
     box-sizing: border-box;
@@ -309,7 +309,7 @@
 
   .toggle-copy small {
     max-width: 28rem;
-    color: #78716c;
+    color: var(--color-text-muted);
     font-size: .72rem;
     line-height: 1.35;
   }
@@ -335,7 +335,7 @@
     background-color: var(--color-bg);
     transition: 0.2s ease;
     border-radius: 24px;
-    border: 1px solid var(--color-border-muted);
+    border: 1px solid var(--color-border);
   }
 
   .switch-slider:before {
@@ -345,7 +345,7 @@
     width: 16px;
     left: 3px;
     bottom: 3px;
-    background-color: var(--color-border-muted);
+    background-color: var(--color-text-subtle);
     transition: 0.2s ease;
     border-radius: 50%;
   }

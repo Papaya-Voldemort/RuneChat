@@ -20,8 +20,10 @@
     display: flex;
     margin: 0;
     padding: 0;
-    display: flex;
     flex-direction: row;
     max-width: 100vw;
+    min-height: 100vh;
+    background: var(--color-canvas);
+    color: var(--color-text);
   }
 </style>
