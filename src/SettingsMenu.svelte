@@ -18,31 +18,19 @@
   export let open = false;
 
   const models = [
-    { slug: "anthropic/claude-fable-5", name: "Claude Fable 5" },
+    { slug: "anthropic/claude-opus-5", name: "Claude Opus 5" },
+    { slug: "openai/gpt-5.6-sol", name: "GPT-5.6 Sol" },
+    { slug: "anthropic/claude-sonnet-5", name: "Claude Sonnet 5" },
+    { slug: "google/gemini-3.6-flash", name: "Gemini 3.6 Flash" },
+    { slug: "openai/gpt-5.6-luna", name: "GPT-5.6 Luna" },
+    { slug: "moonshotai/kimi-k3", name: "Kimi K3" },
+    { slug: "z-ai/glm-5.2", name: "GLM 5.2" },
+    { slug: "x-ai/grok-4.5", name: "Grok 4.5" },
     {
-      slug: "google/gemini-3.1-flash-lite-preview",
-      name: "Gemini 3.1 Flash Lite (Preview)",
+      slug: "google/gemini-3.5-flash-lite",
+      name: "Gemini 3.5 Flash Lite",
     },
-    { slug: "google/gemini-3.1-flash-lite", name: "Gemini 3.1 Flash Lite" },
-    { slug: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro" },
-    { slug: "google/gemma-4-31b-instruct", name: "Gemma 4 31B Instruct" },
-    { slug: "anthropic/claude-sonnet-4.6", name: "Claude 4.6 Sonnet" },
-    { slug: "anthropic/claude-sonnet-4.5", name: "Claude 4.5 Sonnet" },
-    { slug: "anthropic/claude-opus-4.8", name: "Claude 4.8 Opus" },
-    { slug: "anthropic/claude-opus-4.5", name: "Claude 4.5 Opus" },
-    { slug: "anthropic/claude-haiku-4.5", name: "Claude 4.5 Haiku" },
-    { slug: "anthropic/claude-sonnet-latest", name: "Claude Sonnet (Latest)" },
-    { slug: "openai/gpt-5.5-preview", name: "GPT-5.5 Preview" },
-    { slug: "openai/gpt-5-preview", name: "GPT-5 Preview" },
-    { slug: "openai/o1", name: "OpenAI o1" },
-    { slug: "deepseek/deepseek-v4-pro", name: "DeepSeek V4 Pro" },
-    { slug: "deepseek/deepseek-v4-flash", name: "DeepSeek V4 Flash" },
-    { slug: "qwen/qwen3.7-plus", name: "Qwen 3.7 Plus" },
-    { slug: "xiaomi/mimo-v2.5", name: "MiMo V2.5" },
-    { slug: "tencent/hy3-preview", name: "Hunyuan 3 Preview" },
-    { slug: "minimax/minimax-m3", name: "MiniMax M3" },
-    { slug: "baichuan/kimi-k2", name: "Kimi K2" },
-    { slug: "glm/glm-5.1", name: "GLM 5.1" },
+
     { slug: "custom", name: "Custom Model ID..." },
   ];
 

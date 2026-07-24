@@ -21,8 +21,11 @@
     margin: 0;
     padding: 0;
     flex-direction: row;
-    max-width: 100vw;
-    min-height: 100vh;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
     background: var(--color-canvas);
     color: var(--color-text);
   }

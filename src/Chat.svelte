@@ -379,23 +379,25 @@
     .chat-container {
         display: flex;
         flex-direction: column;
-        height: 100vh;
-        width: 100%;
+        flex: 1 1 auto;
+        height: 100%;
         max-width: 1100px;
         margin: 0 auto;
 
         background: inherit;
         min-width: 0;
+        min-height: 0;
     }
 
     .messages {
         flex: 1;
+        min-height: 0;
         overflow-y: auto;
         padding: 1rem;
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        padding-bottom: 4rem;
+        padding-bottom: 1rem;
         scrollbar-width: none;
         gap: 1rem;
     }
@@ -405,9 +407,8 @@
     }
 
     .input-area {
-        position: sticky;
-        bottom: 0;
         display: flex;
+        flex: 0 0 auto;
         align-items: center;
         justify-content: center;
         padding: 0.75rem 1rem;

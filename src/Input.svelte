@@ -384,6 +384,11 @@
     cursor: not-allowed;
   }
 
+  .add-btn img {
+    width: 24px;
+    height: 24px;
+  }
+
   .add-btn[aria-expanded="true"] { background: var(--color-primary-soft); border-color: var(--color-primary); transform: rotate(45deg); }
 
   .chat-input-wrapper {

@@ -300,7 +300,7 @@
     padding: 0.5rem;
     margin: 0;
 
-    height: 100vh;
+    height: 100%;
 
     width: 0;
     min-width: 0;
@@ -581,7 +581,7 @@
       position: fixed;
       top: 0;
       left: 0;
-      height: 100vh;
+      height: 100%;
       width: 100%;
       min-width: 100%;
       z-index: 100;

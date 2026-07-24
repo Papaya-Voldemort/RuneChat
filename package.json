@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "test": "bun test",
-    "dev": "concurrently \"bun run server.ts\" \"vite\"",
+    "dev": "concurrently \"bun run server.ts\" \"vite --host\"",
     "build": "vite build",
     "start": "bun run server.ts",
     "server": "bun run server.ts",
