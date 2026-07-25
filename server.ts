@@ -23,8 +23,7 @@ const corsHeaders = {
 };
 
 interface ChatRequestBody {
-  messages?: any[];
-  attachments?: Array<{ name: string; mimeType: string; size: number; content: string }>;
+  messages?: ChatRequestMessage[];
   apiKey?: string;
   model?: string;
   persona?: string;
@@ -36,26 +35,74 @@ interface ChatRequestBody {
   artifacts?: RuneLayoutCatalog;
 }
 
-const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+type ChatImagePart = { type: "image_url"; image_url: { url: string } };
+type ChatTextPart = { type: "text"; text: string };
+type ChatRequestMessage = { role: "user" | "assistant"; content: string | Array<ChatTextPart | ChatImagePart> };
+
+interface StoredImage {
+  file: File;
+  expiresAt: number;
+  size: number;
+}
+
+const MAX_TEXT_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_ATTACHMENT_BYTES = 50 * 1024 * 1024;
 const MAX_ATTACHMENT_TEXT_LENGTH = 500_000;
+const MAX_IMAGES_PER_MESSAGE = 4;
+const IMAGE_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_STORED_IMAGE_BYTES = 500 * 1024 * 1024;
+const storedImages = new Map<string, StoredImage>();
+const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const allowedAttachmentExtensions = new Set([
   ".txt", ".md", ".csv", ".json", ".js", ".ts", ".tsx", ".jsx", ".html", ".css", ".xml", ".yaml", ".yml", ".py", ".java", ".c", ".cpp", ".h", ".sql", ".sh", ".log",
 ]);
 
-function validateAttachment(value: unknown): { name: string; mimeType: string; size: number; content: string } {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("attachment is invalid");
-  const attachment = value as Record<string, unknown>;
-  if (typeof attachment.name !== "string" || !attachment.name.trim() || attachment.name.length > 255) {
-    throw new Error("attachment name is invalid");
+function cleanExpiredImages(): void {
+  const now = Date.now();
+  for (const [id, image] of storedImages) {
+    if (image.expiresAt <= now) storedImages.delete(id);
   }
-  if (typeof attachment.mimeType !== "string" || attachment.mimeType.length > 255) throw new Error("attachment type is invalid");
-  if (typeof attachment.size !== "number" || !Number.isInteger(attachment.size) || attachment.size < 0 || attachment.size > MAX_ATTACHMENT_BYTES) {
-    throw new Error("attachment size is invalid");
+}
+
+function storedImageBytes(): number {
+  return [...storedImages.values()].reduce((total, image) => total + image.size, 0);
+}
+
+function publicBaseUrl(req: Request): string {
+  const configuredUrl = Bun.env.PUBLIC_BASE_URL ?? process.env.PUBLIC_BASE_URL;
+  if (configuredUrl) return configuredUrl.replace(/\/$/, "");
+  const forwardedProto = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const forwardedHost = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  if (forwardedProto === "https" && forwardedHost) return `https://${forwardedHost}`;
+  return new URL(req.url).origin;
+}
+
+function validateMessageContent(content: unknown): string | Array<ChatTextPart | ChatImagePart> {
+  if (typeof content === "string") {
+    if (content.length > 500_000) throw new Error("Each message must have bounded text content");
+    return content;
   }
-  if (typeof attachment.content !== "string" || attachment.content.length > MAX_ATTACHMENT_TEXT_LENGTH) {
-    throw new Error("attachment content is invalid");
+  if (!Array.isArray(content) || !content.length || content.length > 20) {
+    throw new Error("Each message must have valid content");
   }
-  return { name: attachment.name, mimeType: attachment.mimeType, size: attachment.size, content: attachment.content };
+
+  let imageCount = 0;
+  return content.map((part) => {
+    if (!part || typeof part !== "object" || Array.isArray(part)) throw new Error("Each message content part is invalid");
+    const record = part as Record<string, unknown>;
+    if (record.type === "text" && typeof record.text === "string" && record.text.length <= 500_000) {
+      return { type: "text", text: record.text };
+    }
+    const url = record.type === "image_url" && record.image_url && typeof record.image_url === "object"
+      ? (record.image_url as Record<string, unknown>).url
+      : undefined;
+    if (typeof url === "string" && url.length <= 2_048 && /^https:\/\//i.test(url)) {
+      imageCount += 1;
+      if (imageCount > MAX_IMAGES_PER_MESSAGE) throw new Error(`Each message can include at most ${MAX_IMAGES_PER_MESSAGE} images`);
+      return { type: "image_url", image_url: { url } };
+    }
+    throw new Error("Each message content part must be text or an HTTPS image URL");
+  });
 }
 
 function validateChatBody(value: unknown): Required<Pick<ChatRequestBody, "messages" | "apiKey">> & ChatRequestBody {
@@ -68,19 +115,12 @@ function validateChatBody(value: unknown): Required<Pick<ChatRequestBody, "messa
   if (body.messages !== undefined && (!Array.isArray(body.messages) || body.messages.length > 200)) {
     throw new Error("Messages must be an array with at most 200 entries");
   }
-  const messages = (body.messages ?? []).map((message) => {
+  const messages = (body.messages ?? []).map((message): ChatRequestMessage => {
     if (!message || typeof message !== "object" || !["user", "assistant"].includes(message.role)) {
       throw new Error("Each message must have a valid role");
     }
-    if (typeof message.content !== "string" || message.content.length > 500_000) {
-      throw new Error("Each message must have bounded text content");
-    }
-    return { role: message.role, content: message.content };
+    return { role: message.role, content: validateMessageContent(message.content) };
   });
-  if (body.attachments !== undefined && (!Array.isArray(body.attachments) || body.attachments.length > 10)) {
-    throw new Error("attachments must contain at most 10 files");
-  }
-  const attachments = (body.attachments ?? []).map(validateAttachment);
   const boundedStrings = ["model", "persona", "customPrompt", "userProfileName", "userProfileAbout"] as const;
   for (const field of boundedStrings) {
     const fieldValue = body[field];
@@ -94,7 +134,7 @@ function validateChatBody(value: unknown): Required<Pick<ChatRequestBody, "messa
   if (body.enableLayoutPreviews !== undefined && typeof body.enableLayoutPreviews !== "boolean") {
     throw new Error("enableLayoutPreviews must be a boolean");
   }
-  return { ...body, messages, attachments, apiKey: body.apiKey, artifacts: validateArtifactCatalog(body.artifacts) };
+  return { ...body, messages, apiKey: body.apiKey, artifacts: validateArtifactCatalog(body.artifacts) };
 }
 
 async function serveClient(pathname: string): Promise<Response> {
@@ -141,10 +181,28 @@ Bun.serve({
 
     if (url.pathname === "/api/attachments" && req.method === "POST") {
       try {
+        cleanExpiredImages();
         const formData = await req.formData();
         const file = formData.get("file");
         if (!(file instanceof File)) throw new Error("Choose a file to upload");
-        if (file.size > MAX_ATTACHMENT_BYTES) throw new Error("Files must be 5 MB or smaller");
+
+        if (allowedImageTypes.has(file.type)) {
+          if (file.size > MAX_IMAGE_ATTACHMENT_BYTES) throw new Error("Images must be 50 MB or smaller");
+          if (storedImageBytes() + file.size > MAX_STORED_IMAGE_BYTES) {
+            throw new Error("Image storage is temporarily full. Try again shortly.");
+          }
+          const id = crypto.randomUUID();
+          storedImages.set(id, { file, expiresAt: Date.now() + IMAGE_TTL_MS, size: file.size });
+          return Response.json({
+            kind: "image",
+            name: path.basename(file.name),
+            mimeType: file.type,
+            size: file.size,
+            url: `${publicBaseUrl(req)}/api/attachments/${id}`,
+          }, { headers: corsHeaders });
+        }
+
+        if (file.size > MAX_TEXT_ATTACHMENT_BYTES) throw new Error("Files must be 5 MB or smaller");
 
         const extension = path.extname(file.name).toLowerCase();
         if (!allowedAttachmentExtensions.has(extension)) {
@@ -157,6 +215,7 @@ Bun.serve({
         }
 
         return Response.json({
+          kind: "text",
           name: path.basename(file.name),
           mimeType: file.type || "text/plain",
           size: file.size,
@@ -171,11 +230,24 @@ Bun.serve({
       }
     }
 
+    if (url.pathname.startsWith("/api/attachments/") && req.method === "GET") {
+      cleanExpiredImages();
+      const id = url.pathname.slice("/api/attachments/".length);
+      const image = storedImages.get(id);
+      if (!image) return new Response("Image not found", { status: 404 });
+      return new Response(image.file, {
+        headers: {
+          "Content-Type": image.file.type,
+          "Cache-Control": "public, max-age=3600",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
     if (url.pathname === "/api/chat" && req.method === "POST") {
       try {
         const {
           messages,
-          attachments,
           apiKey,
           model,
           persona,

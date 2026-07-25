@@ -47,6 +47,12 @@ export const enableLayoutPreviews = writable<boolean>(
     : true,
 );
 
+export const theme = writable<boolean>(
+  typeof localStorage !== "undefined"
+    ? localStorage.getItem("theme") !== "light"
+    : true,
+);
+
 if (typeof localStorage !== "undefined") {
   selectedModel.subscribe((val) => localStorage.setItem("runechat_model", val));
   selectedPersona.subscribe((val) =>
@@ -73,4 +79,10 @@ if (typeof localStorage !== "undefined") {
   enableLayoutPreviews.subscribe((val) =>
     localStorage.setItem("runechat_enable_layouts", val ? "true" : "false"),
   );
+
+  theme.subscribe((isDark) => {
+    document.documentElement.classList.toggle("dark", isDark);
+    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+  });
 }

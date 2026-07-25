@@ -7,7 +7,15 @@ export type Role = "user" | "assistant";
 export type MessagePart =
   | { type: "reasoning"; text: string }
   | { type: "text"; text: string }
-  | { type: "attachment"; name: string; mimeType: string; size: number; content: string }
+  | {
+      type: "attachment";
+      kind: "text" | "image";
+      name: string;
+      mimeType: string;
+      size: number;
+      content?: string;
+      url?: string;
+    }
   | RuneLayoutPart
   | { type: "warning"; text: string };
 

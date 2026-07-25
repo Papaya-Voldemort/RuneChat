@@ -47,6 +47,10 @@ bun install
 bun run dev
 ```
 
+For image input in a deployed environment, set `PUBLIC_BASE_URL` to RuneChat's
+public HTTPS URL. RuneChat serves each image at a temporary opaque URL so the
+model provider can fetch it without a base64-encoded chat payload.
+
 ## Future Updates
 
 In the future I want to add the following new features:

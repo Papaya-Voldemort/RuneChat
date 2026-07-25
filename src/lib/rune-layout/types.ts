@@ -85,8 +85,13 @@ export type ChatStreamEvent =
   | { type: "done" };
 
 export interface ChatRequestPayload {
-  messages: Array<{ role: string; content: string }>;
-  attachments?: Array<{ name: string; mimeType: string; size: number; content: string }>;
+  messages: Array<{
+    role: string;
+    content: string | Array<
+      | { type: "text"; text: string }
+      | { type: "image_url"; image_url: { url: string } }
+    >;
+  }>;
   apiKey: string;
   model?: string;
   persona?: string;

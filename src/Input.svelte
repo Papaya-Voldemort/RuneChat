@@ -57,7 +57,7 @@
   }
 
   async function send() {
-    if (!message.trim()) return;
+    if (!message.trim() && !attachments.length) return;
     await initializeChatStore();
 
     const currentApiKey = get(apiKey);
@@ -85,7 +85,7 @@
       },
     ]);
 
-    if (isFirstMessage) {
+    if (isFirstMessage && userContent.trim()) {
       const activeId = get(activeChatId);
       if (activeId) {
         void (async () => {
@@ -179,19 +179,32 @@
   }
 
   function getRequestContext(assistantId: string): {
-    providerMessages: Array<{ role: string; content: string }>;
+    providerMessages: Array<{
+      role: string;
+      content: string | Array<
+        | { type: "text"; text: string }
+        | { type: "image_url"; image_url: { url: string } }
+      >;
+    }>;
     artifacts: RuneLayoutCatalog;
   } {
     const msgs = get(messages);
     const artifacts: RuneLayoutCatalog = {};
     const providerMessages = msgs.flatMap((msg: Message) => {
       const parts = msg.parts || [];
-      const content: string[] = [];
+      const content: Array<
+        | { type: "text"; text: string }
+        | { type: "image_url"; image_url: { url: string } }
+      > = [];
 
       for (const part of parts) {
-        if (part.type === "text") content.push(part.text);
+        if (part.type === "text") content.push({ type: "text", text: part.text });
         if (part.type === "attachment") {
-          content.push(`\n\n[Attached file: ${part.name}]\n${part.content}\n[End attached file]`);
+          if (part.kind === "image" && part.url) {
+            content.push({ type: "image_url", image_url: { url: part.url } });
+          } else if (part.content) {
+            content.push({ type: "text", text: `\n\n[Attached file: ${part.name}]\n${part.content}\n[End attached file]` });
+          }
         }
         if (part.type !== "layout") continue;
         let artifact: RuneLayoutArtifact | undefined;
@@ -209,14 +222,17 @@
             if (oldestId) delete artifacts[oldestId];
           }
           artifacts[artifact.id] = artifact;
-          content.push(compactArtifactMarker(artifact));
+          content.push({ type: "text", text: compactArtifactMarker(artifact) });
         }
       }
 
-      const textContent = content.join("") || msg.content || "";
-      if (!textContent || msg.id === assistantId) return [];
+      if (!content.length && msg.content) content.push({ type: "text", text: msg.content });
+      if (!content.length || msg.id === assistantId) return [];
 
-      return [{ role: msg.role, content: textContent }];
+      return [{
+        role: msg.role,
+        content: content.length === 1 && content[0]?.type === "text" ? content[0].text : content,
+      }];
     });
     return { providerMessages, artifacts };
   }

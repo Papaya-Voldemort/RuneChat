@@ -12,6 +12,8 @@ import flexboxIcon from "../icons/Flexbox.svg";
 import serverIcon from "../icons/Server.svg";
 import colorsIcon from "../icons/Colors.svg";
 import addIcon from "../icons/Add.svg";
+import darkIcon from "../icons/Dark.svg";
+import lightIcon from "../icons/Light.svg";
 
 export {
   closeIcon,
@@ -27,5 +29,7 @@ export {
   flexboxIcon,
   serverIcon,
   colorsIcon,
-  addIcon
+  addIcon,
+  darkIcon,
+  lightIcon
 };

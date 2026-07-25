@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { closeIcon } from "./lib/assets";
+  import { closeIcon, darkIcon, lightIcon } from "./lib/assets";
   import { apiKey } from "./lib/stores/api-key";
   import {
     selectedModel,
@@ -11,6 +11,7 @@
     userProfileName,
     userProfileAbout,
     enableLayoutPreviews,
+    theme
   } from "./lib/stores/settings";
 
   const dispatch = createEventDispatcher();
@@ -58,6 +59,22 @@
     </div>
     <hr />
     <div class="settings">
+        <div class="theme">
+            <span id="themeLabel">Theme</span>
+            <label class="theme-control" for="themeToggle">
+              <img class="theme-icon" src={lightIcon} alt="Light mode" />
+              <input
+                type="checkbox"
+                id="themeToggle"
+                aria-labelledby="themeLabel"
+                aria-describedby="themeDescription"
+                bind:checked={$theme}
+              />
+              <span class="switch-slider"></span>
+              <img class="theme-icon" src={darkIcon} alt="Dark mode" />
+            </label>
+            <span id="themeDescription" class="sr-only">{$theme ? "Dark mode" : "Light mode"}</span>
+        </div>
       <div class="apiKey">
         <label for="apiKey">HCAI API Key (BYOK)</label>
         <input
@@ -144,13 +161,13 @@
       </div>
       <div class="settings-item toggle-row">
         <div class="toggle-copy">
-          <label for="enableLayoutsToggle">Visual Layout Previews</label>
+          <label for="enableLayoutPreviewsToggle">Visual Layout Previews</label>
           <small>Interactive artifacts are created only when you explicitly ask. Turning this off removes layout tools.</small>
         </div>
         <label class="switch-container">
           <input
             type="checkbox"
-            id="enableLayoutsToggle"
+            id="enableLayoutPreviewsToggle"
             bind:checked={$enableLayoutPreviews}
           />
           <span class="switch-slider"></span>
@@ -235,6 +252,27 @@
     overscroll-behavior: contain;
   }
 
+  .theme {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .theme-control {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+  }
+
+  .theme-icon {
+    width: 1rem;
+    height: 1rem;
+    object-fit: contain;
+  }
+
   .apiKey {
     display: flex;
     flex-direction: column;
@@ -315,6 +353,39 @@
     width: 44px;
     height: 24px;
     flex-shrink: 0;
+  }
+
+  .theme-control > input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .theme-control > input:focus-visible + .switch-slider {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .theme-control .switch-slider {
+    position: relative;
+    inset: auto;
+    display: block;
+    width: 44px;
+    height: 24px;
+    flex: 0 0 44px;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .switch-container input {

@@ -2,10 +2,12 @@
   import { onMount, tick } from "svelte";
 
   export interface UploadedAttachment {
+    kind: "text" | "image";
     name: string;
     mimeType: string;
     size: number;
-    content: string;
+    content?: string;
+    url?: string;
   }
 
   let {
@@ -77,13 +79,13 @@
     <button class="close" type="button" onclick={onClose} aria-label="Close add menu">×</button>
   </div>
 
-  <input bind:this={fileInput} class="file-input" type="file" accept=".txt,.md,.csv,.json,.js,.ts,.tsx,.jsx,.html,.css,.xml,.yaml,.yml,.py,.java,.c,.cpp,.h,.sql,.sh,.log" onchange={uploadFile} />
+  <input bind:this={fileInput} class="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,.txt,.md,.csv,.json,.js,.ts,.tsx,.jsx,.html,.css,.xml,.yaml,.yml,.py,.java,.c,.cpp,.h,.sql,.sh,.log" onchange={uploadFile} />
   <button class="upload-action" type="button" onclick={chooseFile} disabled={uploading}>
     <span class="upload-icon" aria-hidden="true">↑</span>
-    <span><strong>{uploading ? "Reading file…" : "Upload a file"}</strong><small>Text, code, CSV, JSON, and Markdown</small></span>
+    <span><strong>{uploading ? "Uploading…" : "Upload a file or image"}</strong><small>PNG, JPEG, WebP, GIF (up to 50 MB), plus text and code files</small></span>
   </button>
   {#if error}<p class="error" role="alert">{error}</p>{/if}
-  <p class="hint">Files stay in this chat and are sent as context when you message.</p>
+  <p class="hint">Images are sent to the model by temporary URL, never as base64.</p>
 </div>
 
 <style>

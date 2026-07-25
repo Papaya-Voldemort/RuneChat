@@ -299,9 +299,16 @@
                                     {part.text}
                                 </div>
                             {:else if part.type === "attachment"}
-                                <div class="attachment-message" title={part.name}>
-                                    <span aria-hidden="true">↗</span> {part.name}
-                                </div>
+                                {#if part.kind === "image" && part.url}
+                                    <figure class="image-attachment">
+                                        <img src={part.url} alt={part.name} />
+                                        <figcaption>{part.name}</figcaption>
+                                    </figure>
+                                {:else}
+                                    <div class="attachment-message" title={part.name}>
+                                        <span aria-hidden="true">↗</span> {part.name}
+                                    </div>
+                                {/if}
                             {/if}
                         {/each}
                     {:else}
@@ -405,6 +412,10 @@
     .messages::-webkit-scrollbar {
         display: none;
     }
+
+    .image-attachment { margin: 0; max-width: min(420px, 100%); overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); }
+    .image-attachment img { display: block; width: 100%; max-height: 360px; object-fit: contain; background: var(--color-surface-sunken); }
+    .image-attachment figcaption { padding: 7px 9px; overflow: hidden; color: var(--color-text-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 
     .input-area {
         display: flex;
