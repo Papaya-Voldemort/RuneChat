@@ -104,6 +104,7 @@
     width: 90%;
     max-width: 500px;
     max-height: 85vh;
+    max-height: 85dvh;
     overflow-y: auto;
     box-sizing: border-box;
   }
@@ -125,5 +126,22 @@
   .settings {
     display: flex;
     flex-direction: column;
+  }
+
+  @media (max-width: 600px) {
+    .menu {
+      top: 0;
+      bottom: auto;
+      left: 0;
+      transform: none;
+      width: 100%;
+      max-width: none;
+      height: 100vh;
+      height: 100dvh;
+      max-height: none;
+      padding: 1rem max(1rem, env(safe-area-inset-right))
+        max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+      border-radius: 0;
+    }
   }
 </style>

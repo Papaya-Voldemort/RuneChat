@@ -204,7 +204,12 @@
     box-shadow: var(--shadow-lg);
     width: 90%;
     max-width: 480px;
+    max-height: 85vh;
+    max-height: 85dvh;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .underlay {
@@ -226,6 +231,8 @@
     flex-direction: column;
     gap: 1.25rem;
     padding-top: 1rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .apiKey {
@@ -345,5 +352,30 @@
   input:checked + .switch-slider:before {
     transform: translateX(20px);
     background-color: var(--color-primary);
+  }
+
+  @media (max-width: 600px) {
+    .menu {
+      top: 0;
+      bottom: auto;
+      left: 0;
+      transform: none;
+      width: 100%;
+      max-width: none;
+      height: 100vh;
+      height: 100dvh;
+      max-height: none;
+      padding: 1rem max(1rem, env(safe-area-inset-right))
+        max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+      border-radius: 0;
+    }
+
+    .header {
+      flex-shrink: 0;
+    }
+
+    .settings {
+      padding-right: 0.15rem;
+    }
   }
 </style>
