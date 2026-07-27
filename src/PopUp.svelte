@@ -1,14 +1,8 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
+  import { uploadAttachment, type UploadedAttachment } from "./lib/functions/attachments";
 
-  export interface UploadedAttachment {
-    kind: "text" | "image";
-    name: string;
-    mimeType: string;
-    size: number;
-    content?: string;
-    url?: string;
-  }
+  export type { UploadedAttachment } from "./lib/functions/attachments";
 
   let {
     onClose,
@@ -38,12 +32,7 @@
     uploading = true;
     error = "";
     try {
-      const data = new FormData();
-      data.set("file", file);
-      const response = await fetch("/api/attachments", { method: "POST", body: data });
-      const result = await response.json() as UploadedAttachment & { error?: string };
-      if (!response.ok) throw new Error(result.error || "Could not read that file");
-      onAttachment(result);
+      onAttachment(await uploadAttachment(file));
       onClose();
     } catch (cause) {
       error = cause instanceof Error ? cause.message : "Could not read that file";

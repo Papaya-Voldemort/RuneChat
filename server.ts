@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { streamChat } from "./src/lib/server/ai";
 import { validateArtifactCatalog } from "./src/lib/rune-layout/artifacts";
 import type { RuneLayoutCatalog } from "./src/lib/rune-layout/types";
+import { createId } from "./src/lib/functions/id";
 
 const port = Number(
   Bun.env.PORT ??
@@ -191,7 +192,7 @@ Bun.serve({
           if (storedImageBytes() + file.size > MAX_STORED_IMAGE_BYTES) {
             throw new Error("Image storage is temporarily full. Try again shortly.");
           }
-          const id = crypto.randomUUID();
+          const id = createId();
           storedImages.set(id, { file, expiresAt: Date.now() + IMAGE_TTL_MS, size: file.size });
           return Response.json({
             kind: "image",

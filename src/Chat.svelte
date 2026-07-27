@@ -14,6 +14,7 @@
     initializeChatStore,
     messages,
     draftPrompt,
+    type Message,
   } from "./lib/stores/chat";
   import {
     selectedPersona,
@@ -28,6 +29,9 @@
   } from "./lib/rune-layout/types";
 
   let messagesContainer = $state<HTMLElement>();
+  let followLatest = $state(true);
+  let hasUnreadMessages = $state(false);
+  let infoMessageId = $state<string | null>(null);
 
   const displayPersonaName = $derived(
     $selectedPersona
@@ -40,13 +44,26 @@
     if (!messagesContainer) return;
 
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    hasUnreadMessages = false;
+  }
+
+  function isNearBottom(): boolean {
+    if (!messagesContainer) return true;
+    const { scrollHeight, scrollTop, clientHeight } = messagesContainer;
+    return scrollHeight - scrollTop - clientHeight < 80;
+  }
+
+  function handleScroll(): void {
+    followLatest = isNearBottom();
+    if (followLatest) hasUnreadMessages = false;
   }
 
   $effect(() => {
     const messageCount = $messages.length;
 
     if (messageCount > 0) {
-      void tick().then(scrollToBottom);
+      if (followLatest) void tick().then(scrollToBottom);
+      else hasUnreadMessages = true;
     }
   });
 
@@ -59,13 +76,13 @@
     void initializeChatStore();
   });
 
-  async function copyBtn(message: any): Promise<void> {
+  async function copyBtn(message: Message): Promise<void> {
     try {
       const parts = message.parts ?? [];
 
       let text = parts
-        .filter((part: any) => part.type === "text")
-        .map((part: any) => part.text)
+        .filter((part): part is Extract<typeof part, { type: "text" }> => part.type === "text")
+        .map((part) => part.text)
         .join("\n");
 
       if (!text) {
@@ -78,8 +95,16 @@
     }
   }
 
-  function showInfo(message: any): void {
-    console.log("Message info:", message);
+  function showInfo(message: Message): void {
+    infoMessageId = infoMessageId === message.id ? null : message.id;
+  }
+
+  function formatDuration(durationMs: number): string {
+    return durationMs < 1000 ? `${Math.round(durationMs)} ms` : `${(durationMs / 1000).toFixed(1)} s`;
+  }
+
+  function formatCost(costUsd: number | undefined): string {
+    return costUsd === undefined ? "Pricing unavailable" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 4 }).format(costUsd);
   }
 
   function layoutArtifact(
@@ -147,7 +172,7 @@
 </script>
 
 <section class="chat-container">
-    <div class="messages" bind:this={messagesContainer}>
+    <div class="messages" bind:this={messagesContainer} onscroll={handleScroll}>
         {#if $messages.length === 0}
             <div class="welcome-container">
                 <h1 class="welcome-title">How can I help you today?</h1>
@@ -301,7 +326,15 @@
                             {:else if part.type === "attachment"}
                                 {#if part.kind === "image" && part.url}
                                     <figure class="image-attachment">
-                                        <img src={part.url} alt={part.name} />
+                                        <img
+                                          src={part.url}
+                                          alt={part.name}
+                                          onerror={(event) => {
+                                            event.currentTarget.replaceWith(
+                                              document.createTextNode("This image is no longer available."),
+                                            );
+                                          }}
+                                        />
                                         <figcaption>{part.name}</figcaption>
                                     </figure>
                                 {:else}
@@ -339,6 +372,7 @@
                         <button
                             class="iconBtn"
                             onclick={() => showInfo(message)}
+                            aria-expanded={infoMessageId === message.id}
                         >
                             <img
                                 src={infoIcon}
@@ -347,10 +381,24 @@
                             />
                         </button>
                     </div>
+                    {#if infoMessageId === message.id}
+                        <aside class="message-info" aria-label="Message information">
+                            {#if message.usage}
+                                <strong>{message.usage.model}</strong>
+                                <span>{message.usage.totalTokens ?? "—"} tokens · {formatDuration(message.usage.durationMs)}</span>
+                                <span>{message.usage.tokensPerSecond?.toFixed(1) ?? "—"} tokens/sec · {formatCost(message.usage.pricingAvailable ? message.usage.costUsd : undefined)}</span>
+                            {:else}
+                                <span>No usage data was returned for this message.</span>
+                            {/if}
+                        </aside>
+                    {/if}
                 </div>
             {/each}
         {/if}
     </div>
+    {#if hasUnreadMessages}
+      <button class="jump-to-latest" onclick={() => { followLatest = true; void tick().then(scrollToBottom); }}>Jump to latest</button>
+    {/if}
     <div class="input-area">
         <Input />
     </div>
@@ -527,6 +575,10 @@
     .message-wrapper:hover .options {
         opacity: 1;
     }
+
+    .message-info { display: flex; flex-direction: column; gap: 2px; max-width: 75%; margin-top: 4px; padding: 7px 9px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-sunken); color: var(--color-text-muted); font-size: 11px; line-height: 1.35; }
+    .message-info strong { color: var(--color-text); font-size: 12px; }
+    .jump-to-latest { position: absolute; right: 24px; bottom: 84px; z-index: 21; border: 1px solid var(--color-border); border-radius: 999px; padding: 8px 12px; background: var(--color-surface-raised); box-shadow: var(--shadow-md); color: var(--color-text); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
 
     .message-bubble {
         max-width: 75%;

@@ -4,7 +4,7 @@
 
 A custom quiky AI chatbot interface for Hack Club AI!
 
-Live Demo: [https://runechat-production-16f4.up.railway.app/](https://runechat-production-16f4.up.railway.app/)
+Live Demo: [https://runechat.elinelson.dev](https:/runechat.elinelson.dev)
 
 > AI Declaration: This project used AI for the following: Specific help on storage. See more in [`ai-declaration.md`](./ai-declaration.md).
 

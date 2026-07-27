@@ -228,11 +228,13 @@ export async function streamChatRequest(
   onParts: (parts: MessagePart[]) => void,
   fetcher: typeof fetch = fetch,
   onUsage?: (usage: NonNullable<ChatStreamAssembler["usage"]>) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const response = await fetcher("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
+    signal,
   });
   if (!response.ok) {
     throw new Error((await response.text()) || `Request failed with ${response.status}`);

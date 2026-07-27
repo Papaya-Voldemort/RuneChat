@@ -78,7 +78,7 @@
       <div class="apiKey">
         <label for="apiKey">HCAI API Key (BYOK)</label>
         <input
-          type="text"
+          type="password"
           name="apiKey"
           id="apiKey"
           placeholder="Paste your HCAI API key here"
@@ -86,7 +86,7 @@
         />
       </div>
       <span
-        >Get your Key at: <a target="_blank" href="https://ai.hackclub.com"
+        >Get your Key at: <a target="_blank" rel="noopener noreferrer" href="https://ai.hackclub.com"
           >HCAI</a
         ></span
       >

@@ -4,6 +4,7 @@ import type {
   RuneLayoutCatalog,
   RuneLayoutReference,
 } from "./types";
+import { createId } from "../functions/id";
 
 export const MAX_ARTIFACTS_PER_REQUEST = 20;
 export const MAX_MARKUP_BYTES = 50 * 1024;
@@ -71,7 +72,7 @@ function normalizeSummary(value: string): string {
 
 export function normalizeRuneLayoutArtifact(
   input: RuneLayoutSourceInput,
-  fallbackId: string = crypto.randomUUID(),
+  fallbackId: string = createId(),
 ): RuneLayoutArtifact {
   assertString(input.title, "title");
   assertString(input.summary, "summary");
@@ -160,7 +161,7 @@ function extractTitle(source: string): { title: string; source: string } {
 
 export function convertLegacyLayout(
   part: LegacyRuneLayoutPart | string,
-  id: string = crypto.randomUUID(),
+  id: string = createId(),
 ): RuneLayoutArtifact {
   const original = typeof part === "string" ? part : part.text;
   const { title, source } = extractTitle(original);

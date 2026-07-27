@@ -2,8 +2,8 @@ import { writable } from "svelte/store";
 
 export const selectedModel = writable<string>(
   typeof localStorage !== "undefined"
-    ? localStorage.getItem("runechat_model") || "google/gemini-3.1-flash-lite"
-    : "google/gemini-3.1-flash-lite",
+    ? localStorage.getItem("runechat_model") || "openai/gpt-5.6-luna"
+    : "openai/gpt-5.6-luna",
 );
 
 export const selectedPersona = writable<string>(

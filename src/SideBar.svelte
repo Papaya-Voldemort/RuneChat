@@ -206,7 +206,12 @@
                 on:dblclick|stopPropagation={() => startEditing(chat.id)}
                 role="button"
                 tabindex="0"
-                on:keydown={(e) => e.key === "Enter" && openChat(chat.id)}
+                on:keydown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    void openChat(chat.id);
+                  }
+                }}
               >
                 {#if editingChatId === chat.id}
                   <input

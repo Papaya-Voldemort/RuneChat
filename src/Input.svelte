@@ -29,7 +29,8 @@
   import { compactArtifactMarker, convertLegacyLayout } from "./lib/rune-layout/artifacts";
   import type { RuneLayoutArtifact, RuneLayoutCatalog } from "./lib/rune-layout/types";
   import PopUp from "./PopUp.svelte";
-  import type { UploadedAttachment } from "./PopUp.svelte";
+  import { uploadAttachment, type UploadedAttachment } from "./lib/functions/attachments";
+  import { createId } from "./lib/functions/id";
 
   let isPopUpOpen = false;
   let attachments: UploadedAttachment[] = [];
@@ -41,6 +42,9 @@
   let textareaRef: HTMLTextAreaElement;
   let message = "";
   let loading = false;
+  let requestController: AbortController | undefined;
+  let uploadingAttachment = false;
+  let attachmentError = "";
 
   draftPrompt.subscribe((value) => {
     if (value) {
@@ -75,7 +79,7 @@
     messages.update((msgs) => [
       ...msgs,
       {
-        id: crypto.randomUUID(),
+        id: createId(),
         role: "user",
         parts: [
           { type: "text", text: userContent },
@@ -117,7 +121,8 @@
 
     loading = true;
     isStreaming.set(true);
-    const assistantId = crypto.randomUUID();
+    requestController = new AbortController();
+    const assistantId = createId();
 
     messages.update((msgs) => [
       ...msgs,
@@ -157,19 +162,26 @@
         messages.update((msgs) => msgs.map((msg) =>
           msg.id === assistantId ? { ...msg, usage } : msg,
         ));
-      });
+      }, requestController.signal);
     } catch (error) {
-      console.error("Chat error:", error);
-      const errorText =
-        error instanceof Error ? error.message : "Unknown chat error";
-      updateAssistantParts(assistantId, [{
-        type: "text",
-        text: `Sorry, I couldn't get a response. ${errorText}`,
-      }]);
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        console.error("Chat error:", error);
+        const errorText =
+          error instanceof Error ? error.message : "Unknown chat error";
+        updateAssistantParts(assistantId, [{
+          type: "text",
+          text: `Sorry, I couldn't get a response. ${errorText}`,
+        }]);
+      }
     } finally {
       loading = false;
       isStreaming.set(false);
+      requestController = undefined;
     }
+  }
+
+  function stopGenerating(): void {
+    requestController?.abort();
   }
 
   function updateAssistantParts(id: string, nextParts: MessagePart[]) {
@@ -253,6 +265,35 @@
   function removeAttachment(index: number): void {
     attachments = attachments.filter((_, attachmentIndex) => attachmentIndex !== index);
   }
+
+  async function addFiles(files: Iterable<File>): Promise<void> {
+    const filesToAdd = Array.from(files);
+    if (!filesToAdd.length || uploadingAttachment) return;
+
+    uploadingAttachment = true;
+    attachmentError = "";
+    try {
+      const nextAttachments = await Promise.all(filesToAdd.map(uploadAttachment));
+      attachments = [...attachments, ...nextAttachments];
+    } catch (error) {
+      attachmentError = error instanceof Error ? error.message : "Could not add that file";
+    } finally {
+      uploadingAttachment = false;
+    }
+  }
+
+  function handlePaste(event: ClipboardEvent): void {
+    const files = event.clipboardData?.files;
+    if (!files?.length) return;
+    event.preventDefault();
+    void addFiles(files);
+  }
+
+  function handleDrop(event: DragEvent): void {
+    event.preventDefault();
+    const files = event.dataTransfer?.files;
+    if (files?.length) void addFiles(files);
+  }
 </script>
 
 <div class="chat-input-wrapper">
@@ -267,10 +308,13 @@
         {/each}
       </div>
     {/if}
-    <div class="chat-input">
+    {#if attachmentError}
+      <p class="attachment-error" role="alert">{attachmentError}</p>
+    {/if}
+    <div class="chat-input" role="group" aria-label="Message composer" ondragover={(event) => event.preventDefault()} ondrop={handleDrop}>
         <button
           class="add-btn"
-          disabled={loading}
+          disabled={loading || uploadingAttachment}
           onclick={togglePopUp}
           aria-expanded={isPopUpOpen}
           aria-label="Add tools or upload media"
@@ -285,13 +329,18 @@
           bind:value={message}
           oninput={autoResize}
           onkeydown={handleKeydown}
+          onpaste={handlePaste}
           disabled={loading}
           rows="1"
         ></textarea>
 
-        <button class="send-btn" onclick={send} disabled={loading}>
-          <img src={sendMessageIcon} alt="Send Message" />
-        </button>
+        {#if loading}
+          <button class="send-btn stop-btn" onclick={stopGenerating} aria-label="Stop generating">Stop</button>
+        {:else}
+          <button class="send-btn" onclick={send} disabled={uploadingAttachment}>
+            <img src={sendMessageIcon} alt="Send Message" />
+          </button>
+        {/if}
     </div>
 
 </div>
@@ -420,5 +469,7 @@
   .attachment-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 8px; }
   .attachment-chip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 5px 6px 5px 9px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface-raised); color: var(--color-text-muted); font-size: 12px; }
   .attachment-chip button { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-text-muted); cursor: pointer; font-size: 16px; line-height: 1; }.attachment-chip button:hover { background: var(--color-surface-hover); color: var(--color-text); }
+  .attachment-error { margin: 0 0 6px; color: var(--color-danger-text); font-size: 12px; }
+  .stop-btn { width: auto; min-width: 48px; padding: 0 10px; color: var(--color-danger-text); font-size: 12px; font-weight: 700; }
 
 </style>

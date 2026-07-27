@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import type { RuneLayoutArtifact, RuneLayoutStatus } from "./lib/rune-layout/types";
   import { compileRuneLayoutSrcdoc } from "./lib/rune-layout/runtime";
+  import { createId } from "./lib/functions/id";
 
   export let artifact: RuneLayoutArtifact | undefined = undefined;
   export let status: RuneLayoutStatus = "building";
@@ -26,7 +27,7 @@
     : "";
   $: if (compileKey && compileKey !== lastCompileKey && artifact) {
     lastCompileKey = compileKey;
-    channel = crypto.randomUUID();
+    channel = createId();
     readyReceived = false;
     measured = false;
     runtimeError = "";
@@ -63,6 +64,24 @@
     localRetry += 1;
   }
 
+  function exportArtifact(): void {
+    if (!artifact) return;
+    const closingScriptTag = "</scr" + "ipt>";
+    const source = [
+      "<!doctype html>",
+      `<title>${artifact.title}</title>`,
+      artifact.css ? `<style>${artifact.css}</style>` : "",
+      artifact.markup,
+      artifact.script ? `<script>${artifact.script.replace(new RegExp(closingScriptTag, "gi"), "<\\/script")}${closingScriptTag}` : "",
+    ].filter(Boolean).join("\n");
+    const url = URL.createObjectURL(new Blob([source], { type: "text/html" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${artifact.title.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "rune-layout"}.html`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   onMount(() => {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
@@ -80,6 +99,7 @@
         {status === "building" ? phase : status === "error" || runtimeError ? "Needs attention" : revealed ? "Interactive" : "Preparing"}
       </span>
       {#if status === "ready"}
+        <button class="reload-button" on:click={exportArtifact} aria-label="Download layout as HTML" title="Download HTML">⇩</button>
         <button class="reload-button" on:click={reload} aria-label="Reload layout" title="Reload layout">↻</button>
       {/if}
     </div>
