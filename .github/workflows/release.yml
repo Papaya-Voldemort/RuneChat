@@ -20,10 +20,12 @@ jobs:
       matrix:
         include:
           - name: macOS Apple Silicon
-            platform: macos-latest
+            platform: macos-15
             args: --target aarch64-apple-darwin
           - name: macOS Intel
-            platform: macos-13
+            # macos-15 is an Apple Silicon runner; cross-compile the Intel release
+            # rather than waiting for the limited Intel runner pool.
+            platform: macos-15
             args: --target x86_64-apple-darwin
           - name: Windows x64
             platform: windows-latest
