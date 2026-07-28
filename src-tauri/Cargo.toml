@@ -1,6 +1,6 @@
 [package]
 name = "runechat"
-version = "0.1.0"
+version = "0.1.5"
 description = "RuneChat desktop app"
 authors = ["RuneChat contributors"]
 edition = "2021"
