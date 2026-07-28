@@ -5,6 +5,7 @@
 [![Release](https://github.com/Papaya-Voldemort/RuneChat/actions/workflows/release.yml/badge.svg)](https://github.com/Papaya-Voldemort/RuneChat/actions/workflows/release.yml)
 
 A custom AI chatbot interface powered by Hack Club AI!
+Made for Hackclub Horizons!
 
 Live Demo: [https://runechat.elinelson.dev](https://runechat.elinelson.dev)
 
