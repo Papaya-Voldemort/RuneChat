@@ -1,5 +1,6 @@
 import type { MessagePart } from "../stores/chat";
 import type { ChatRequestPayload, ChatStreamEvent, ChatUsage } from "../rune-layout/types";
+import { apiUrl } from "./api-url";
 
 const OPEN_THINKING = "<thinking>";
 const CLOSE_THINKING = "</thinking>";
@@ -230,7 +231,7 @@ export async function streamChatRequest(
   onUsage?: (usage: NonNullable<ChatStreamAssembler["usage"]>) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const response = await fetcher("/api/chat", {
+  const response = await fetcher(apiUrl("/api/chat"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

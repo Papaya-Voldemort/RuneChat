@@ -31,6 +31,7 @@
   import PopUp from "./PopUp.svelte";
   import { uploadAttachment, type UploadedAttachment } from "./lib/functions/attachments";
   import { createId } from "./lib/functions/id";
+  import { apiUrl } from "./lib/functions/api-url";
 
   let isPopUpOpen = false;
   let attachments: UploadedAttachment[] = [];
@@ -94,7 +95,7 @@
       if (activeId) {
         void (async () => {
           try {
-            const res = await fetch("/api/summarize", {
+            const res = await fetch(apiUrl("/api/summarize"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

@@ -306,6 +306,7 @@
     margin: 0;
 
     height: 100%;
+    overflow: hidden;
 
     width: 0;
     min-width: 0;
@@ -452,7 +453,13 @@
     gap: 0.4rem;
     flex: 1;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
     padding-right: 0.25rem;
+  }
+
+  #chatScroll::-webkit-scrollbar {
+    display: none;
   }
 
   .chatRow {
@@ -582,11 +589,16 @@
   }
 
   @media (max-width: 768px) {
-    #sideBar.expanded {
+    :global(body.native-mobile) #floatingToggle {
+      top: calc(var(--mobile-safe-top) + 0.5rem);
+    }
+
+    :global(body.native-mobile) #sideBar.expanded {
       position: fixed;
-      top: 0;
+      top: var(--mobile-safe-top);
+      bottom: var(--mobile-safe-bottom);
       left: 0;
-      height: 100%;
+      height: auto;
       width: 100%;
       min-width: 100%;
       z-index: 100;

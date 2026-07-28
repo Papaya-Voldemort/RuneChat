@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "build": {
+    "beforeDevCommand": "bun run tauri:android:dev:prepare"
+  },
+  "bundle": {
+    "externalBin": []
+  }
+}

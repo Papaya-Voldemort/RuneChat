@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { syncDesktopIcon } from "../functions/desktop-icon";
 
 export const selectedModel = writable<string>(
   typeof localStorage !== "undefined"
@@ -84,5 +85,6 @@ if (typeof localStorage !== "undefined") {
     document.documentElement.classList.toggle("dark", isDark);
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
     localStorage.setItem("theme", isDark ? "dark" : "light");
+    void syncDesktopIcon(isDark);
   });
 }

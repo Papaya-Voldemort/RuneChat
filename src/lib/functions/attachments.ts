@@ -11,7 +11,7 @@ export async function uploadAttachment(file: File): Promise<UploadedAttachment> 
   const data = new FormData();
   data.set("file", file);
 
-  const response = await fetch("/api/attachments", {
+  const response = await fetch(apiUrl("/api/attachments"), {
     method: "POST",
     body: data,
   });
@@ -25,3 +25,4 @@ export async function uploadAttachment(file: File): Promise<UploadedAttachment> 
 
   return result;
 }
+import { apiUrl } from "./api-url";

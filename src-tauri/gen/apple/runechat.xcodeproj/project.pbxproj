@@ -1,0 +1,482 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3E14803B953C0B1ED83C69BE /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1B9CE2B8FDC0319CFE7732F /* UIKit.framework */; };
+		5CAFDE043EF54E32D3945B57 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A45B1859F3D3179E07D9F963 /* MetalKit.framework */; };
+		61F1E31AE7EB761F0B1495AB /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 12AF3072332511601F5FBF43 /* assets */; };
+		6418488D04763F7F71C6CB48 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A073947283D84B0C8861592C /* LaunchScreen.storyboard */; };
+		6C0F114A301925FF005B8297 /* RuneChat.icon in Resources */ = {isa = PBXBuildFile; fileRef = 6C0F1149301925FF005B8297 /* RuneChat.icon */; };
+		85698CC8BDCF2E11E8D3F1AF /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6CFDA4CC303EA43AE6D8346D /* CoreGraphics.framework */; };
+		B924BBF28847B7927B2124F7 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB6B9D04921900BD505BB596 /* WebKit.framework */; };
+		C16A3E45C7BACD1550FEF781 /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3967E098125A19DEF6394EE3 /* libapp.a */; };
+		C3ADA646003023DD030790E7 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D42569CCA24D51C7C273F377 /* Metal.framework */; };
+		D7859E5D0B9209C4FBBD749B /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CFFF4FEF78A744834F17018 /* main.mm */; };
+		E6A7865570B13770292D2BDF /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04C038A1255E145E1C4F978F /* QuartzCore.framework */; };
+		EF664ADC606870C1F282E49F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 41DD942867B3033FCA9EFD53 /* Assets.xcassets */; };
+		EF6F4FD9801548912F88814B /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 41D116349D84BF9379AAA93F /* Security.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		04C038A1255E145E1C4F978F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		12AF3072332511601F5FBF43 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
+		230938F001DEC35F04A4372D /* runechat_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; name = runechat_iOS.app; path = RuneChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		35D651FA00AAAAE5EE4AABC2 /* runechat_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = runechat_iOS.entitlements; sourceTree = "<group>"; };
+		3967E098125A19DEF6394EE3 /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		41D116349D84BF9379AAA93F /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		41DD942867B3033FCA9EFD53 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5D435917034C535854C53C17 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6C0F1149301925FF005B8297 /* RuneChat.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = RuneChat.icon; sourceTree = "<group>"; };
+		6CFDA4CC303EA43AE6D8346D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		9CFFF4FEF78A744834F17018 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		A073947283D84B0C8861592C /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A1B9CE2B8FDC0319CFE7732F /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		A45B1859F3D3179E07D9F963 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		A51998260B389DA2B3F1CEC1 /* main.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = main.rs; sourceTree = "<group>"; };
+		BDDF8784BD77295249C96EBB /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
+		D42569CCA24D51C7C273F377 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		D8EE948C2A58E8E37E4D2F3D /* lib.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.rs; sourceTree = "<group>"; };
+		FB6B9D04921900BD505BB596 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		97944535D91724E372F3E07F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C16A3E45C7BACD1550FEF781 /* libapp.a in Frameworks */,
+				85698CC8BDCF2E11E8D3F1AF /* CoreGraphics.framework in Frameworks */,
+				C3ADA646003023DD030790E7 /* Metal.framework in Frameworks */,
+				5CAFDE043EF54E32D3945B57 /* MetalKit.framework in Frameworks */,
+				E6A7865570B13770292D2BDF /* QuartzCore.framework in Frameworks */,
+				EF6F4FD9801548912F88814B /* Security.framework in Frameworks */,
+				3E14803B953C0B1ED83C69BE /* UIKit.framework in Frameworks */,
+				B924BBF28847B7927B2124F7 /* WebKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0C177C03879C7D330948A85B /* src */ = {
+			isa = PBXGroup;
+			children = (
+				D8EE948C2A58E8E37E4D2F3D /* lib.rs */,
+				A51998260B389DA2B3F1CEC1 /* main.rs */,
+			);
+			name = src;
+			path = ../../src;
+			sourceTree = "<group>";
+		};
+		489B84C1C8B129E0E925B741 /* runechat */ = {
+			isa = PBXGroup;
+			children = (
+				9CFFF4FEF78A744834F17018 /* main.mm */,
+				D833BB50D5C1947309EE0A64 /* bindings */,
+			);
+			path = runechat;
+			sourceTree = "<group>";
+		};
+		537B387789E7D12504A768B8 /* Externals */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Externals;
+			sourceTree = "<group>";
+		};
+		5694C1961400DD6907AE619C /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				489B84C1C8B129E0E925B741 /* runechat */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		5E992B6BE02D7CCC26E85BFF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				230938F001DEC35F04A4372D /* runechat_iOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		87E3F45CAF209EC738EC4F26 = {
+			isa = PBXGroup;
+			children = (
+				12AF3072332511601F5FBF43 /* assets */,
+				41DD942867B3033FCA9EFD53 /* Assets.xcassets */,
+				6C0F1149301925FF005B8297 /* RuneChat.icon */,
+				A073947283D84B0C8861592C /* LaunchScreen.storyboard */,
+				537B387789E7D12504A768B8 /* Externals */,
+				ED7DD9AD8E91F9B5240ED147 /* runechat_iOS */,
+				5694C1961400DD6907AE619C /* Sources */,
+				0C177C03879C7D330948A85B /* src */,
+				A4E722CD762C2A0B3020D0C3 /* Frameworks */,
+				5E992B6BE02D7CCC26E85BFF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A4E722CD762C2A0B3020D0C3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6CFDA4CC303EA43AE6D8346D /* CoreGraphics.framework */,
+				3967E098125A19DEF6394EE3 /* libapp.a */,
+				D42569CCA24D51C7C273F377 /* Metal.framework */,
+				A45B1859F3D3179E07D9F963 /* MetalKit.framework */,
+				04C038A1255E145E1C4F978F /* QuartzCore.framework */,
+				41D116349D84BF9379AAA93F /* Security.framework */,
+				A1B9CE2B8FDC0319CFE7732F /* UIKit.framework */,
+				FB6B9D04921900BD505BB596 /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D833BB50D5C1947309EE0A64 /* bindings */ = {
+			isa = PBXGroup;
+			children = (
+				BDDF8784BD77295249C96EBB /* bindings.h */,
+			);
+			path = bindings;
+			sourceTree = "<group>";
+		};
+		ED7DD9AD8E91F9B5240ED147 /* runechat_iOS */ = {
+			isa = PBXGroup;
+			children = (
+				5D435917034C535854C53C17 /* Info.plist */,
+				35D651FA00AAAAE5EE4AABC2 /* runechat_iOS.entitlements */,
+			);
+			path = runechat_iOS;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		65B70B4B2ECE0AB60A97ADD4 /* runechat_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D2A9F7A1B2681927EAB12C68 /* Build configuration list for PBXNativeTarget "runechat_iOS" */;
+			buildPhases = (
+				AA4C7D7BB724A391E5431878 /* Build Rust Code */,
+				220ED5BAA95CB4721F5D6120 /* Sources */,
+				ECCC30FB33315790857717BB /* Resources */,
+				97944535D91724E372F3E07F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = runechat_iOS;
+			packageProductDependencies = (
+			);
+			productName = runechat_iOS;
+			productReference = 230938F001DEC35F04A4372D /* runechat_iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		375A8D4AE7D93B3FBDB07642 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = 5B49A2FF2D6F34DF7C170CCE /* Build configuration list for PBXProject "runechat" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 87E3F45CAF209EC738EC4F26;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5E992B6BE02D7CCC26E85BFF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				65B70B4B2ECE0AB60A97ADD4 /* runechat_iOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		ECCC30FB33315790857717BB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EF664ADC606870C1F282E49F /* Assets.xcassets in Resources */,
+				6418488D04763F7F71C6CB48 /* LaunchScreen.storyboard in Resources */,
+				6C0F114A301925FF005B8297 /* RuneChat.icon in Resources */,
+				61F1E31AE7EB761F0B1495AB /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		AA4C7D7BB724A391E5431878 /* Build Rust Code */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Rust Code";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "bun tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		220ED5BAA95CB4721F5D6120 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D7859E5D0B9209C4FBBD749B /* main.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1C9311F9FDC19BBFA2A0273A /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = runechat_iOS/runechat_iOS.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = runechat_iOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.elinelson.runechat;
+				PRODUCT_NAME = RuneChat;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = release;
+		};
+		37B0E6EB42F140D79447166F /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = runechat_iOS/runechat_iOS.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = runechat_iOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.elinelson.runechat;
+				PRODUCT_NAME = RuneChat;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = debug;
+		};
+		8BE010C4DB8B301B9E1DA286 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = debug;
+		};
+		BEE2C6C109DFDC91EB8308A1 /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5B49A2FF2D6F34DF7C170CCE /* Build configuration list for PBXProject "runechat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8BE010C4DB8B301B9E1DA286 /* debug */,
+				BEE2C6C109DFDC91EB8308A1 /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+		D2A9F7A1B2681927EAB12C68 /* Build configuration list for PBXNativeTarget "runechat_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				37B0E6EB42F140D79447166F /* debug */,
+				1C9311F9FDC19BBFA2A0273A /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 375A8D4AE7D93B3FBDB07642 /* Project object */;
+}

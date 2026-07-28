@@ -1,6 +1,6 @@
 {
   "name": "runechat",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -10,10 +10,18 @@
     "start": "bun run server.ts",
     "server": "bun run server.ts",
     "client": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:sidecar": "bun run scripts/prepare-tauri-sidecar.ts",
+    "tauri:dev:prepare": "bun run tauri:sidecar && vite --host 127.0.0.1",
+    "tauri:dev": "tauri dev",
+    "tauri:android:dev:prepare": "concurrently \"SERVER_PORT=3001 bun run server\" \"SERVER_PORT=3001 vite --host 0.0.0.0\"",
+    "tauri:build:prepare": "bun run build && bun run tauri:sidecar",
+    "tauri:build": "tauri build"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
+    "@tauri-apps/cli": "^2",
     "@types/bun": "latest",
     "concurrently": "^9.2.1",
     "svelte": "^5.55.5",
@@ -23,6 +31,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.63",
     "@openrouter/ai-sdk-provider": "^2.9.0",
+    "@tauri-apps/api": "^2",
     "ai": "^6.0.177",
     "dompurify": "^3.4.2",
     "marked": "^18.0.3",

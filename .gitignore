@@ -1,9 +1,19 @@
 # dependencies (bun install)
 node_modules
 
+# package-manager diagnostics
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-debug.log*
+
 # output
 out
 dist
+.tauri/binaries/runechat-server-*
+src-tauri/binaries/
+src-tauri/target/
+src-tauri/.tauri/
 *.tgz
 
 # code coverage
@@ -32,3 +42,29 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Xcode / Apple platform build artifacts
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.ipa
+*.dSYM
+*.dSYM.zip
+Pods/
+.swiftpm/
+.tauri/
+src-tauri/gen/apple/build/
+src-tauri/gen/apple/Podfile.lock
+src-tauri/gen/apple/**/xcuserdata/
+
+# Android local SDK, signing material, and build output
+src-tauri/gen/android/.gradle/
+src-tauri/gen/android/buildSrc/.kotlin/
+src-tauri/gen/android/build/
+src-tauri/gen/android/app/build/
+src-tauri/gen/android/local.properties
+src-tauri/gen/android/keystore.properties
+*.apk
+*.aab
