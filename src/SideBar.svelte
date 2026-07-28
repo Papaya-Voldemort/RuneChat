@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { fade, slide } from "svelte/transition";
+  import { cubicInOut } from "svelte/easing";
+  import { fade } from "svelte/transition";
 
   import SettingsMenu from "./SettingsMenu.svelte";
   import InfoMenu from "./InfoMenu.svelte";
@@ -49,6 +50,19 @@
 
   function toggleSideBar() {
     sideBar = !sideBar;
+  }
+
+  function drawer(node: Element, { duration = 260 } = {}) {
+    const width = node.getBoundingClientRect().width;
+
+    return {
+      duration,
+      easing: cubicInOut,
+      css: (t: number, u: number) => `
+        transform: translateX(${-u * width}px);
+        opacity: ${0.96 + 0.04 * t};
+      `,
+    };
   }
 
   async function handleCreateChat() {
@@ -125,7 +139,7 @@
   <div
     id="sideBar"
     class:expanded={sideBar}
-    transition:slide={{ axis: "x", duration: 300 }}
+    transition:drawer
   >
     <div id="top">
       <button id="logoBtn" class="iconBtn">
@@ -589,20 +603,23 @@
   }
 
   @media (max-width: 768px) {
+    #sideBar.expanded {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      min-width: 100vw;
+      height: 100dvh;
+      z-index: 100;
+      box-shadow: none;
+    }
+
     :global(body.native-mobile) #floatingToggle {
       top: calc(var(--mobile-safe-top) + 0.5rem);
     }
 
     :global(body.native-mobile) #sideBar.expanded {
-      position: fixed;
-      top: var(--mobile-safe-top);
-      bottom: var(--mobile-safe-bottom);
-      left: 0;
-      height: auto;
-      width: 100%;
-      min-width: 100%;
-      z-index: 100;
-      box-shadow: none;
+      padding-top: calc(var(--mobile-safe-top) + 0.5rem);
+      padding-bottom: calc(var(--mobile-safe-bottom) + 0.5rem);
     }
   }
 </style>
