@@ -23,6 +23,12 @@ const targetsByTauriTarget = Object.values(targets).flatMap((platformTargets) =>
   }, {});
 
 const requestedTauriTarget = process.env.RUNECHAT_SIDECAR_TAURI_TARGET || process.env.TAURI_ENV_TARGET_TRIPLE;
+
+if (requestedTauriTarget?.includes("android")) {
+  console.log(`Skipping Tauri API sidecar compilation for Android target ${requestedTauriTarget}`);
+  process.exit(0);
+}
+
 const target = requestedTauriTarget
   ? targetsByTauriTarget[requestedTauriTarget]
   : targets[process.platform]?.[process.arch];
