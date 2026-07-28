@@ -108,6 +108,8 @@ jobs:
           } > src-tauri/gen/android/keystore.properties
 
       - name: Build signed Android artifacts
+        env:
+          VITE_API_BASE_URL: https://runechat.elinelson.dev
         run: bun run tauri android build --apk --aab --target aarch64 --target armv7 --ci
 
       - name: Upload Android artifacts to the draft release
