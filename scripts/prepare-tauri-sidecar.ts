@@ -16,8 +16,23 @@ const targets: Record<string, Record<string, { bunTarget: string; tauriTarget: s
   },
 };
 
-const target = targets[process.platform]?.[process.arch];
-if (!target) throw new Error(`Tauri sidecar builds are not configured for ${process.platform}/${process.arch}`);
+const targetsByTauriTarget = Object.values(targets).flatMap((platformTargets) => Object.values(platformTargets))
+  .reduce<Record<string, { bunTarget: string; tauriTarget: string }>>((acc, currentTarget) => {
+    acc[currentTarget.tauriTarget] = currentTarget;
+    return acc;
+  }, {});
+
+const requestedTauriTarget = process.env.RUNECHAT_SIDECAR_TAURI_TARGET || process.env.TAURI_ENV_TARGET_TRIPLE;
+const target = requestedTauriTarget
+  ? targetsByTauriTarget[requestedTauriTarget]
+  : targets[process.platform]?.[process.arch];
+
+if (!target) {
+  if (requestedTauriTarget) {
+    throw new Error(`Tauri sidecar builds are not configured for target ${requestedTauriTarget}`);
+  }
+  throw new Error(`Tauri sidecar builds are not configured for ${process.platform}/${process.arch}`);
+}
 
 // Keep generated executables outside src-tauri: `tauri dev` watches that
 // directory and would otherwise relaunch the app every time this is compiled.

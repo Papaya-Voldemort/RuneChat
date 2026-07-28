@@ -52,6 +52,7 @@ jobs:
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUNECHAT_SIDECAR_TAURI_TARGET: ${{ matrix.args == '--target x86_64-apple-darwin' && 'x86_64-apple-darwin' || matrix.args == '--target aarch64-apple-darwin' && 'aarch64-apple-darwin' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: RuneChat ${{ github.ref_name }}
