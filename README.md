@@ -13,6 +13,22 @@ Live Demo: [https://runechat.elinelson.dev](https://runechat.elinelson.dev)
 
 > RuneChat is powered by [HCAI](https://ai.hackclub.com/). If Hackclub AI is down your API key will not work
 
+## Table of Contents
+
+- [Screenshots](#screenshots)
+  - [Desktop Interface](#desktop-interface)
+  - [Mobile Interface](#mobile-interface)
+- [What?](#what)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Railway Deployment](#railway-deployment)
+- [Desktop App (Tauri v2)](#desktop-app-tauri-v2)
+  - [Installing an Unsigned macOS Build](#installing-an-unsigned-macos-build)
+- [GitHub Releases](#github-releases)
+- [Future Updates](#future-updates)
+- [Final Notes](#final-notes)
+
 ## Screenshots
 
 ### Desktop Interface
@@ -39,6 +55,14 @@ So boom! RuneChat was born! A fun fact about the project is that its original na
 - Reasoning Model Support
 - Model Personas
 
+## Tech Stack
+
+- Bun
+- TS
+- Svelte 5
+- Railway
+- HCAI
+
 ## Quick Start
 
 Go to our web URL to try it out now: [Click Here](https://runechat-production-16f4.up.railway.app/)
@@ -55,6 +79,10 @@ bun run dev
 For image input in a deployed environment, set `PUBLIC_BASE_URL` to RuneChat's
 public HTTPS URL. RuneChat serves each image at a temporary opaque URL so the
 model provider can fetch it without a base64-encoded chat payload.
+
+Image uploads are rate-limited and held temporarily. Browser clients hosted on
+the same origin work automatically; if you host a client separately, set
+`CORS_ORIGINS` to its exact comma-separated HTTPS origin(s).
 
 ## Railway deployment
 
@@ -78,37 +106,7 @@ bun run tauri:dev
 bun run tauri:build
 ```
 
-Build each operating system on a matching CI runner (or a machine with that
-platform's Tauri prerequisites). The sidecar preparation script maps Apple
-Silicon/Intel macOS, ARM64/x64 Linux, and ARM64/x64 Windows to Tauri's target
-triples automatically. Generated sidecars stay out of Git.
-
-`VITE_API_BASE_URL` overrides the API address. Set it to a public HTTPS API for
-mobile builds or when using image attachments: an AI provider cannot retrieve
-an image hosted on a desktop user's loopback address. The bundled Bun sidecar
-is desktop-only.
-
-The primary app icon is `src-tauri/icons/RuneChat.png`. Its light, dark, clear,
-and tinted source variants are retained in `src-tauri/icons/runechat-variants/`
-for future native asset-catalog or mobile packaging work.
-
-On desktop, RuneChat swaps between the light and dark icon automatically when
-the in-app theme changes. The desktop icon PNGs include transparent padding so
-they sit correctly in the Dock. iOS uses Apple’s opaque AppIcon catalog; its
-light/dark/clear/tinted variants are managed in Xcode’s asset editor.
-
-Android launcher assets use adaptive foreground and background layers, legacy
-and round fallbacks, and an Android 13+ monochrome layer for themed icons. The
-source layers live in `src-tauri/icons/android-source/`.
-
 ### Installing an unsigned macOS build
-
-The macOS artifact published by this repository is ad-hoc signed, but it is
-not signed with an Apple Developer identity or notarized. After opening the
-downloaded DMG, drag RuneChat to `Applications`. Then Control-click (or
-right-click) `RuneChat.app`, choose **Open**, and confirm **Open** in the
-warning dialog. macOS remembers that choice, so subsequent launches work
-normally.
 
 If macOS blocks the first launch, open **System Settings → Privacy & Security**
 and select **Open Anyway** for RuneChat, then confirm. Only when you trust the

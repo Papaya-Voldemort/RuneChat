@@ -25,6 +25,9 @@ Failure to follow these rules may result in your contributions being rejected.
 ## Polish
 - Fix spelling on README
 
+## Github CI
+- Help setting up Github Actions
+
 ---
 
 Thank you for reading this file. Please follow our AI usage rules to keep this project human-led!

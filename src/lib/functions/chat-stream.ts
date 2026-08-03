@@ -49,6 +49,7 @@ function parseEvent(line: string): ChatStreamEvent {
 }
 
 type TextChannel = "text" | "reasoning";
+type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 class ThinkingTagParser {
   private channel: TextChannel = "text";
@@ -227,7 +228,7 @@ export function createChatStreamAssembler(): ChatStreamAssembler {
 export async function streamChatRequest(
   payload: ChatRequestPayload,
   onParts: (parts: MessagePart[]) => void,
-  fetcher: typeof fetch = fetch,
+  fetcher: Fetcher = fetch,
   onUsage?: (usage: NonNullable<ChatStreamAssembler["usage"]>) => void,
   signal?: AbortSignal,
 ): Promise<void> {

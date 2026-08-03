@@ -17,11 +17,28 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const clientDistDir = path.join(rootDir, "dist");
 const clientIndexPath = path.join(clientDistDir, "index.html");
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+const configuredCorsOrigins = new Set(
+  (Bun.env.CORS_ORIGINS ?? process.env.CORS_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
+
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin");
+  if (!origin) return {};
+
+  // Same-origin browser requests work by default. A separately hosted client
+  // must be explicitly allowlisted instead of receiving wildcard access.
+  if (origin !== new URL(req.url).origin && !configuredCorsOrigins.has(origin)) return {};
+
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin",
+  };
+}
 
 interface ChatRequestBody {
   messages?: ChatRequestMessage[];
@@ -46,13 +63,18 @@ interface StoredImage {
   size: number;
 }
 
-const MAX_TEXT_ATTACHMENT_BYTES = 5 * 1024 * 1024;
-const MAX_IMAGE_ATTACHMENT_BYTES = 50 * 1024 * 1024;
+const MAX_TEXT_ATTACHMENT_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_ATTACHMENT_TEXT_LENGTH = 500_000;
 const MAX_IMAGES_PER_MESSAGE = 4;
-const IMAGE_TTL_MS = 24 * 60 * 60 * 1000;
-const MAX_STORED_IMAGE_BYTES = 500 * 1024 * 1024;
+const IMAGE_TTL_MS = 60 * 60 * 1000;
+const MAX_STORED_IMAGE_BYTES = 100 * 1024 * 1024;
+const MAX_UPLOAD_REQUEST_BYTES = MAX_IMAGE_ATTACHMENT_BYTES + 64 * 1024;
+const UPLOAD_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_UPLOADS_PER_WINDOW = 6;
+const MAX_RATE_LIMIT_CLIENTS = 10_000;
 const storedImages = new Map<string, StoredImage>();
+const uploadAttempts = new Map<string, { count: number; resetAt: number }>();
 const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const allowedAttachmentExtensions = new Set([
   ".txt", ".md", ".csv", ".json", ".js", ".ts", ".tsx", ".jsx", ".html", ".css", ".xml", ".yaml", ".yml", ".py", ".java", ".c", ".cpp", ".h", ".sql", ".sh", ".log",
@@ -67,6 +89,33 @@ function cleanExpiredImages(): void {
 
 function storedImageBytes(): number {
   return [...storedImages.values()].reduce((total, image) => total + image.size, 0);
+}
+
+function clientAddress(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || req.headers.get("x-real-ip")?.trim()
+    || "unknown";
+}
+
+function cleanExpiredUploadAttempts(now: number): void {
+  for (const [client, attempt] of uploadAttempts) {
+    if (attempt.resetAt <= now) uploadAttempts.delete(client);
+  }
+}
+
+function allowUpload(req: Request): boolean {
+  const now = Date.now();
+  cleanExpiredUploadAttempts(now);
+  const client = clientAddress(req);
+  const previous = uploadAttempts.get(client);
+  if (!previous || previous.resetAt <= now) {
+    if (uploadAttempts.size >= MAX_RATE_LIMIT_CLIENTS) return false;
+    uploadAttempts.set(client, { count: 1, resetAt: now + UPLOAD_RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (previous.count >= MAX_UPLOADS_PER_WINDOW) return false;
+  previous.count += 1;
+  return true;
 }
 
 function publicBaseUrl(req: Request): string {
@@ -176,19 +225,29 @@ Bun.serve({
     if (req.method === "OPTIONS") {
       return new Response(null, {
         status: 200,
-        headers: corsHeaders,
+        headers: corsHeaders(req),
       });
     }
 
     if (url.pathname === "/api/attachments" && req.method === "POST") {
       try {
         cleanExpiredImages();
+        const declaredSize = Number(req.headers.get("content-length"));
+        if (Number.isFinite(declaredSize) && declaredSize > MAX_UPLOAD_REQUEST_BYTES) {
+          throw new Error("Upload request is too large");
+        }
+        if (!allowUpload(req)) {
+          return Response.json({ error: "Too many uploads. Please wait a few minutes and try again." }, {
+            status: 429,
+            headers: corsHeaders(req),
+          });
+        }
         const formData = await req.formData();
         const file = formData.get("file");
         if (!(file instanceof File)) throw new Error("Choose a file to upload");
 
         if (allowedImageTypes.has(file.type)) {
-          if (file.size > MAX_IMAGE_ATTACHMENT_BYTES) throw new Error("Images must be 50 MB or smaller");
+          if (file.size > MAX_IMAGE_ATTACHMENT_BYTES) throw new Error("Images must be 20 MB or smaller");
           if (storedImageBytes() + file.size > MAX_STORED_IMAGE_BYTES) {
             throw new Error("Image storage is temporarily full. Try again shortly.");
           }
@@ -200,10 +259,10 @@ Bun.serve({
             mimeType: file.type,
             size: file.size,
             url: `${publicBaseUrl(req)}/api/attachments/${id}`,
-          }, { headers: corsHeaders });
+          }, { headers: corsHeaders(req) });
         }
 
-        if (file.size > MAX_TEXT_ATTACHMENT_BYTES) throw new Error("Files must be 5 MB or smaller");
+        if (file.size > MAX_TEXT_ATTACHMENT_BYTES) throw new Error("Files must be 2 MB or smaller");
 
         const extension = path.extname(file.name).toLowerCase();
         if (!allowedAttachmentExtensions.has(extension)) {
@@ -221,12 +280,12 @@ Bun.serve({
           mimeType: file.type || "text/plain",
           size: file.size,
           content,
-        }, { headers: corsHeaders });
+        }, { headers: corsHeaders(req) });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not process attachment";
         return Response.json({ error: message }, {
-          status: /choose|smaller|supported|too much/i.test(message) ? 400 : 500,
-          headers: corsHeaders,
+          status: /choose|smaller|supported|too much|too large|decode form data/i.test(message) ? 400 : 500,
+          headers: corsHeaders(req),
         });
       }
     }
@@ -240,7 +299,7 @@ Bun.serve({
         headers: {
           "Content-Type": image.file.type,
           "Cache-Control": "public, max-age=3600",
-          "Access-Control-Allow-Origin": "*",
+          ...corsHeaders(req),
         },
       });
     }
@@ -274,7 +333,7 @@ Bun.serve({
         });
 
         const headers = new Headers(response.headers);
-        Object.entries(corsHeaders).forEach(([key, value]) =>
+        Object.entries(corsHeaders(req)).forEach(([key, value]) =>
           headers.set(key, value),
         );
 
@@ -291,7 +350,7 @@ Bun.serve({
           { error: message },
           {
             status: /required|invalid|range|array|bounded|at most|too long/i.test(message) ? 400 : 500,
-            headers: corsHeaders,
+            headers: corsHeaders(req),
           },
         );
       }
@@ -304,7 +363,7 @@ Bun.serve({
         if (!apiKey) {
           return Response.json(
             { error: "API key is required" },
-            { status: 400, headers: corsHeaders },
+            { status: 400, headers: corsHeaders(req) },
           );
         }
 
@@ -336,13 +395,13 @@ Bun.serve({
         const data = await response.json();
         const title = data.choices?.[0]?.message?.content?.trim() || "New Chat";
 
-        return Response.json({ title }, { headers: corsHeaders });
+        return Response.json({ title }, { headers: corsHeaders(req) });
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
         return Response.json(
           { error: message },
-          { status: 500, headers: corsHeaders },
+          { status: 500, headers: corsHeaders(req) },
         );
       }
     }
@@ -353,7 +412,7 @@ Bun.serve({
 
     return new Response("Not found", {
       status: 404,
-      headers: corsHeaders,
+      headers: corsHeaders(req),
     });
   },
 });
